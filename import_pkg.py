@@ -65,58 +65,12 @@ def read_color4f(file):
 def read_color4d(file):
     c4d = struct.unpack('BBBB',file.read(4))
     return [c4d[0]/255,c4d[1]/255,c4d[2]/255,c4d[3]/255]
- 
-######################################################
-# TESTING FUNCTIONS!!!
-######################################################
-def load_tex(filepath):
-    texfile = open(filepath,'rb')
-    twidth,theight,type,mips,unknown,bits = struct.unpack('HHHHHL',texfile.read(16))
-    print('TEX FILE DEBUG:')
-    print('WIDTH : ' + str(twidth))
-    print('HEIGHT : ' + str(theight))
-    print('TYPE : ' + str(type))
-    #construct blender data
-    bimg = bpy.data.images.new(name='teximage', width=twidth, height=theight)
-    if type == 1 or type == 14:
-        #palletted image
-        pal = [[0,0,0,255]] * 256
-        for pit in range(256):
-            pal[pit] = struct.unpack('BBBB',texfile.read(4))
-        img_indexes = struct.unpack('B'*(twidth*theight),texfile.read(twidth*theight))
-        for y in range(theight):
-            for x in range(twidth):
-                bimg.pixels[(twidth * y + x) * 4 + 0] = pal[img_indexes[(twidth * y + x)]][0]/255
-                bimg.pixels[(twidth * y + x) * 4 + 1] = pal[img_indexes[(twidth * y + x)]][1]/255
-                bimg.pixels[(twidth * y + x) * 4 + 2] = pal[img_indexes[(twidth * y + x)]][2]/255
-                bimg.pixels[(twidth * y + x) * 4 + 3] = pal[img_indexes[(twidth * y + x)]][3]/255
-                
-    if type == 17 or type == 18:
-        #rgb or rgba 
-        for y in range(theight-1):
-            for x in range(twidth):
-                #print('reading pixel ' + str(x) + ' ' + str(y))
-                r,g,b = struct.unpack('BBB',texfile.read(3))
-                a = 255
-                if type == 18:
-                    a = struct.unpack('B',texfile.read(1))[0]
-                bimg.pixels[(twidth * y + x) * 4 + 0] = r/255
-                bimg.pixels[(twidth * y + x) * 4 + 1] = g/255
-                bimg.pixels[(twidth * y + x) * 4 + 2] = b/255
-                bimg.pixels[(twidth * y + x) * 4 + 3] = a/255
-    texfile.close()
-    return bimg
 
 ######################################################
 # IMPORT MAIN FILES
 ######################################################
 def try_load_texture(tex_name):
     texturepath = path.abspath(path.join(os.path.dirname(pkg_path) ,"../texture//" + tex_name))
-    find_path = texturepath + ".tex oh god please no"
-    if os.path.isfile(find_path):
-        print('LOADING TEX ' + find_path)
-        img = load_tex(find_path)
-        return img
     find_path = texturepath + ".tga"
     if os.path.isfile(find_path):
         #prioritize TGA
