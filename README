@@ -1,0 +1,98 @@
+Blender PKG Add-On
+Version 0.13
+March 02, 2016
+
+Created by Dummiesman
+
+1.Requirements
+  The addon was created in Blender 2.76. If you have any issues with the addon in a previous Blender version, I will NOT provide support!!
+
+2.Installation
+  Blender 32 Bit:
+    On 32 bit Blender installations, extract the downloaded ZIP file to
+    C:\Program Files (x86)\Blender Foundation\Blender\2.76\scripts\addon
+
+  Blender 64 Bit:
+    On 64 bit Blender installations, extract the downloaded ZIP file to
+    C:\Program Files\Blender Foundation\Blender\2.76\scripts\addons
+
+  After you extract the Add-on, it will NOT show up in your import/export list by default!
+
+  After extracting the Add-on, start Blender. Once Blender is started, open up File->User Preferences, and navigate over to the Add-ons tab. Find "Import-Export: Midtown Madness 2 PKG Format", and enable it. Click "Save User Preferences" on the bottom of the dialog, and close the dialog.
+
+  Now you will be able to use the Add-on.
+
+3.Importing
+  Textures
+    Textures with the format BMP,TGA will be imported. TEX is NOT supported.
+
+  MTX Files
+    MTX files will automatically be imported if found
+
+  Geometry Flags
+    Because geometry flags are done via geometry, and not via material. These are NOT imported.
+
+4.Exporting
+  Reflections
+    To change the "Shininess" of a material, change the "Reflectivity" property under the "Mirror" section. It doesn't matter if the property is grayed out; it is still editable and will affect export.
+
+  Geometry Flags
+    Applying the "Shadeless" tick in Materials settings will export any geometry with that material as shadeless in MM2
+
+  Textures
+    When exporting, the default texture name for a material will be the material name. If that material has a texture assigned to it in the textures tab, then the texture name will be used.
+
+    Matte materials should be named "mm2:notexture". It does not matter if Blender adds .001, .002, etc to the end of this, the exporter will ignore that.
+
+  XRefs
+    To define an xref, simply name an empty object "xref:xrefname". Where xrefname is the name of the PKG file to xref e.g. "sp_parkmtr_f". Again it does not matter if Blender adds the .001 and so on. Make sure not to include the ".pkg" extension in the xref name.
+
+    XRefs will not export their rotation. Only their position.
+
+  Paintjobs
+    In the export dialog, in the bottom left, there is a text box called "Material Replacement Info". This text box is there for creating multiple paintjobs.
+
+    The paintjobs system in this Add-on differs from the one in ZModeler, but works in the same way in the end.
+
+    To define a paintjob replacement, use this format:_yellow,_red
+    To define multiple paintjob replacements, use this format:_yellow,_red|_yellow,_blue
+
+  Auto Bound
+    Auto bound will automatically generate a default-style BOUND for you. This option is only available for vehicles. 
+
+  MTX Files
+    MTX files will be created if the location of an object is not 0,0,0. Objects do not need the :m suffix. Adding the :m suffix will crash the game, because it will be exported with that name into the PKG file.
+
+  Export Type
+    Export type (Dashboard, Trailer, Prop) will be automatically determined. And all types of objects such as city props, buildings, etc should work automatically
+
+
+5.FAQ
+  Q:I imported my PKG file, I have my textures in the right format, but I don't see them in Blender!?
+    A:You have to be in Material render mode, rather than Solid. You also must have lighting in the scene to see materials.
+
+  Q:Why do the imported normals get overwritten when I enter edit mode?
+    A:Blender automatically recalculates the normals when entering edit mode. To restore original, or close to original normals for default vehicles, use the remove doubles tool, then apply the Edge Split modifier at an angle above 80 degrees
+
+  Q:Why is my UV mapping wrong?
+    A:Your UV mapping may appear to be wrong because MM2 uses per vertex UVs, while Blender uses per face UVs. Make sure all faces of the same material connect to each other in the UV mapper. You should also make sure all modifiers are applied before exporting.
+
+6.Upcoming/Planned Features
+  -BND/BBND Import-export 
+  
+7.Special Thanks
+  Fireboyd78 : suggestions for code improvement
+  Diatosta : Testing, ideas and suggestions
+  Dummiesboy : ideas and suggestions
+  
+8.Changelog
+  Version 0.11
+    -Fixed MTX file export
+    -General code improvements
+  Version 0.12
+    -General code improvements
+    -Added Auto bound. A feature to automatically generate default-style bounds. Availible in the export options 
+  Version 0.13
+    -General code improvements
+    -Added geometry flags support on exporting, as well as importing. This fixes imports for some models that would previously not import. Regarding exporting: See the Export part of the documentation for information
+    -Fixed an error where the 'Shininess' value would not be imported. However, it was exported. This would cause shiny vehicle underbodies, among other issues.
