@@ -368,17 +368,19 @@ def export_shaders(file,replace_words,type="byte"):
             else:
                 #has texture
                 write_angel_string(file,mtl_name)
-                
-            mtl_translucency = 1 - mtl.translucency
+            
+            #calculate alpha for writing
+            mtl_alpha = 1
+            if mtl.use_transparency:
+                mtl_alpha -= mtl.alpha
+            
             if type == "byte":
-                #TODO : write colors
-                file.write(struct.pack('BBBB',int(mtl.diffuse_color[0] * 255),int(mtl.diffuse_color[1] * 255),int(mtl.diffuse_color[2] * 255),int(mtl_translucency * 255)))
-                file.write(struct.pack('BBBB',int(mtl.diffuse_color[0] * 255),int(mtl.diffuse_color[1] * 255),int(mtl.diffuse_color[2] * 255),int(mtl_translucency * 255)))
+                file.write(struct.pack('BBBB',int(mtl.diffuse_color[0] * 255),int(mtl.diffuse_color[1] * 255),int(mtl.diffuse_color[2] * 255),int(mtl_alpha * 255)))
+                file.write(struct.pack('BBBB',int(mtl.diffuse_color[0] * 255),int(mtl.diffuse_color[1] * 255),int(mtl.diffuse_color[2] * 255),int(mtl_alpha * 255)))
                 file.write(struct.pack('BBBB',int(mtl.specular_color[0] * 255),int(mtl.specular_color[1] * 255),int(mtl.specular_color[2] * 255),255))
             elif type == "float":
-                #TODO : write colors
-                file.write(struct.pack('ffff',mtl.diffuse_color[0],mtl.diffuse_color[1],mtl.diffuse_color[2],mtl_translucency))
-                file.write(struct.pack('ffff',mtl.diffuse_color[0],mtl.diffuse_color[1],mtl.diffuse_color[2],mtl_translucency))
+                file.write(struct.pack('ffff',mtl.diffuse_color[0],mtl.diffuse_color[1],mtl.diffuse_color[2],mtl_alpha))
+                file.write(struct.pack('ffff',mtl.diffuse_color[0],mtl.diffuse_color[1],mtl.diffuse_color[2],mtl_alpha))
                 file.write(struct.pack('ffff',mtl.specular_color[0],mtl.specular_color[1],mtl.specular_color[2],1))
                 #????
                 file.write(struct.pack('ffff',0,0,0,1))

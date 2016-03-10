@@ -125,8 +125,11 @@ def read_shaders_file(file,length,offset):
         if mtl != None:
             mtl.diffuse_color = (diffuse_color[0],diffuse_color[1],diffuse_color[2])
             mtl.specular_color = (specular_color[0],specular_color[1],specular_color[2])
-            mtl.translucency = diffuse_color[3] - 1
             mtl.raytrace_mirror.reflect_factor = shininess
+            mtl_alpha_test = (diffuse_color[3] - 1) * -1
+            if mtl_alpha_test > 0:
+                mtl.use_transparency = True
+                mtl.alpha = mtl_alpha_test
             #look for a texture
             tex_result = try_load_texture(texture_name)
             if  tex_result != False:

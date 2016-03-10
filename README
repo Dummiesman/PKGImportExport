@@ -1,6 +1,6 @@
 Blender PKG Add-On
-Version 0.13
-March 02, 2016
+Version 0.14
+March 10, 2016
 
 Created by Dummiesman
 
@@ -66,6 +66,8 @@ Created by Dummiesman
   Export Type
     Export type (Dashboard, Trailer, Prop) will be automatically determined. And all types of objects such as city props, buildings, etc should work automatically
 
+  Transparency
+    Transparency is done using Blenders native system. Tick "Transparency" in the Material panel, and change the Alpha, to make transparent materials.
 
 5.FAQ
   Q:I imported my PKG file, I have my textures in the right format, but I don't see them in Blender!?
