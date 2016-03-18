@@ -98,3 +98,5 @@ Created by Dummiesman
     -General code improvements
     -Added geometry flags support on exporting, as well as importing. This fixes imports for some models that would previously not import. Regarding exporting: See the Export part of the documentation for information
     -Fixed an error where the 'Shininess' value would not be imported. However, it was exported. This would cause shiny vehicle underbodies, among other issues.
+  Version 0.14 and beyond
+    -See GITHUB
