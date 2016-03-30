@@ -1,10 +1,8 @@
 Blender PKG Add-On
-Version 0.14
-March 10, 2016
+Version 0.2
+March 30, 2016
 
 Created by Dummiesman
-
-As of March 17, 2016, this is mostly pep8 compatible :)
 
 1.Requirements
   The addon was created in Blender 2.76. If you have any issues with the addon in a previous Blender version, I will NOT provide support!!
@@ -71,6 +69,9 @@ As of March 17, 2016, this is mostly pep8 compatible :)
   Transparency
     Transparency is done using Blenders native system. Tick "Transparency" in the Material panel, and change the Alpha, to make transparent materials.
 
+  Vertex Colors
+    You can export vertex colors via the checkbox in the export dialog
+    
 5.FAQ
   Q:I imported my PKG file, I have my textures in the right format, but I don't see them in Blender!?
     A:You have to be in Material render mode, rather than Solid. You also must have lighting in the scene to see materials.
@@ -85,6 +86,7 @@ As of March 17, 2016, this is mostly pep8 compatible :)
   -BND/BBND Import-export 
   
 7.Special Thanks
+  RacingFreak : providing a Midnight Club sample file leading to some new discoveries
   Fireboyd78 : suggestions for code improvement
   Diatosta : Testing, ideas and suggestions
   Dummiesboy : ideas and suggestions

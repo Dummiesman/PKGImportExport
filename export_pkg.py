@@ -406,7 +406,7 @@ def export_bounds():
     return
 
 
-def export_meshes(file, meshlist):
+def export_meshes(file, meshlist, colors):
     for obj in meshlist:
         write_file_header(file, obj.name)
         file_data_start_offset = file.tell()
@@ -425,6 +425,9 @@ def export_meshes(file, meshlist):
                 # going to write normals
                 fvf ^= 16
                 break
+        if colors:
+            fvf = fvf | (1<<6)
+
         FVF_NORMALS = ((fvf & 16) != 0)
 
         # do we need a matrix file. Only for H object
@@ -439,10 +442,12 @@ def export_meshes(file, meshlist):
         for mat in obj.data.materials:
             # build the mesh data we need
             uv_layer = bm.loops.layers.uv.active
+            vc_layer = bm.loops.layers.color.active
             index_remap_table = {}
             cmtl_faces = []
             cmtl_vertices = []
             cmtl_uvs = []
+            cmtl_colors = []
             for lt in bm_tris:
                 if lt[0].face.material_index == cmtl_index:
                     cface = []
@@ -455,6 +460,8 @@ def export_meshes(file, meshlist):
                             cmtl_vertices.append(l.vert)
                             if uv_layer is not None:
                                 cmtl_uvs.append(l[uv_layer].uv)
+                            if vc_layer is not None:
+                                cmtl_colors.append(l[vc_layer])
                     cmtl_faces.append(cface)
             # make a blank uv map if we have none
             if len(cmtl_uvs) == 0:
@@ -472,6 +479,9 @@ def export_meshes(file, meshlist):
                 file.write(struct.pack('fff', vert.co[0], vert.co[2], vert.co[1] * -1))
                 if FVF_NORMALS:
                     file.write(struct.pack('fff', vert.normal[0], vert.normal[2], vert.normal[1] * -1))
+                if colors:
+                    vc_data = cmtl_colors[index_remap_table[vert.index]]
+                    file.write(struct.pack('BBBB',int(vc_data[0]*255),int(vc_data[1]*255),int(vc_data[2]*255),255))
                 uv_data = cmtl_uvs[index_remap_table[vert.index]]
                 file.write(struct.pack('ff', uv_data[0], (uv_data[1] - 1) * -1))
             strip_indices = int(len(cmtl_faces) * 3)
@@ -491,6 +501,7 @@ def export_meshes(file, meshlist):
 def save_pkg(filepath,
              paintjobs,
              g_autobound,
+             e_vertexcolors,
              context):
     global SCN
     global pkg_path
@@ -546,7 +557,7 @@ def save_pkg(filepath,
 
     # WRITE PKG FILE
     file.write(bytes('PKG3', 'utf-8'))
-    export_meshes(file, reorder_objects(export_meshlist, export_pred))
+    export_meshes(file, reorder_objects(export_meshlist, export_pred), e_vertexcolors)
     export_shaders(file, get_replace_words(paintjobs), export_shadertype)
     export_xrefs(file)
     export_offset(file)
@@ -561,12 +572,14 @@ def save(operator,
          context,
          filepath="",
          additional_paintjobs="",
-         g_autobound=False
+         g_autobound=False,
+         e_vertexcolors=False
          ):
 
     save_pkg(filepath,
              additional_paintjobs,
              g_autobound,
+             e_vertexcolors,
              context,
              )
 

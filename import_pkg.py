@@ -60,6 +60,16 @@ def read_float3(file):
     return struct.unpack('fff', file.read(12))
 
 
+def read_cfloat3(file):
+    btc = struct.unpack('bbb', file.read(3))
+    return btc[0]/128, btc[1]/128, btc[2]/128
+
+
+def read_cfloat2(file):
+    stc = struct.unpack('HH', file.read(4))
+    return (stc[0]/128) - 128, (stc[1]/128) - 128
+
+
 def read_float2(file):
     return struct.unpack('ff', file.read(8))
 
@@ -72,6 +82,17 @@ def read_color4d(file):
     c4d = struct.unpack('BBBB', file.read(4))
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
 
+lastob = ""
+    
+def triangle_strip_to_list(strip,clockwise):
+    triangle_list = []
+    for v in range(2,len(strip)):
+        if clockwise:
+            triangle_list.extend([strip[v-2], strip[v], strip[v-1]])
+        else:
+            triangle_list.extend([strip[v], strip[v-2], strip[v-1]])
+        clockwise = not clockwise
+    return triangle_list
 
 ######################################################
 # IMPORT MAIN FILES
@@ -166,8 +187,7 @@ def read_xrefs(file):
         ob.show_name = True
         ob.show_axis = True
         scn.objects.link(ob)
-
-
+       
 def read_geometry_file(file, meshname):
     scn = bpy.context.scene
     # ADD THE MESH AND LINK IT TO THE SCENE
@@ -179,10 +199,11 @@ def read_geometry_file(file, meshname):
     bm.verts.ensure_lookup_table()
     uv_layer = bm.loops.layers.uv.new()
     tex_layer = bm.faces.layers.tex.new()
-
+    vc_layer = bm.loops.layers.color.new()
+    
     scn.objects.link(ob)
     scn.objects.active = ob
-
+    
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     # THERE :) Now read file data
     num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('5L', file.read(20))
@@ -190,50 +211,152 @@ def read_geometry_file(file, meshname):
     # mesh data holders
     current_vert_offset = 0
     uvs = []
+    colors = []
     ob_current_material = -1
     for num in range(num_sections):
-        num_strips, strip_flags, shader_offset = struct.unpack('HHL', file.read(8))
-        # FVF stuff
+        #print("READING SECTION " + str(num))
+        num_strips, strip_flags = struct.unpack('HH', file.read(4))
+        shader_offset = 0
+        #strip flags
+        FLAG_compact_strips = ((strip_flags&(1<<8))!=0)
+        # print("DEBUG : FLAG_compact_strip == " + str(FLAG_compact_strips)) 
+        # fvf flags
         FVF_NORMALS = ((fvf & 16) != 0)
+        FVF_UV = ((fvf & 256) != 0)
+        FVF_COLOR = ((fvf&(1<<6))!=0)
+        if FLAG_compact_strips:
+            shader_offset = struct.unpack('H', file.read(2))[0]
+        else:
+            shader_offset = struct.unpack('L', file.read(4))[0]
         # do we have this material?
         if bpy.data.materials.get(str(shader_offset)) is None:
             # we must make it
             bpy.data.materials.new(name=str(shader_offset))
         ob.data.materials.append(bpy.data.materials.get(str(shader_offset)))
         ob_current_material += 1
-        for num2 in range(num_strips):
-            # primtype
-            file.seek(4, 1)
-            num_vertices = struct.unpack('L', file.read(4))[0]
-            # READ VERTICES HERE
-            for i in range(num_vertices):
-                vpos = read_float3(file)
-                vnorm = mathutils.Vector((1, 1, 1))
-                if FVF_NORMALS:
-                    vnorm = read_float3(file)
-                vuv = read_float2(file)
-                vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
-                vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
-                uvs.append((vuv[0], (vuv[1] * -1) + 1))
-            # read indices
-            bm.verts.ensure_lookup_table()
-            num_indices = struct.unpack('L', file.read(4))[0]
-            for i in range(int(num_indices/3)):
-                face_data = struct.unpack('3H', file.read(6))
-                i1 = face_data[0] + current_vert_offset
-                i2 = face_data[1] + current_vert_offset
-                i3 = face_data[2] + current_vert_offset
-                try:
-                    face = bm.faces.new((bm.verts[i1], bm.verts[i2], bm.verts[i3]))
-                    face.smooth = True
-                    face.material_index = ob_current_material
-                    face.loops[0][uv_layer].uv = uvs[i1]
-                    face.loops[1][uv_layer].uv = uvs[i2]
-                    face.loops[2][uv_layer].uv = uvs[i3]
-                except:
-                    print ('PKG add face error :(')
+        
+        if FLAG_compact_strips:
+            ############################
+            # READ MIDNIGHT CLUB STRIP #
+            ############################
+            for num2 in range(num_strips):
+                # primtype
+                file.seek(2, 1)
+                num_vertices = struct.unpack('H', file.read(2))[0]
+                for i in range(num_vertices):
+                    vpos = read_float3(file)
+                    vnorm = mathutils.Vector((1,1,1))
+                    vuv = (0,0)
+                    vcolor = mathutils.Color((1, 1, 1))
+                    if FVF_NORMALS:
+                        vnorm = read_cfloat3(file)
+                    if FVF_COLOR:
+                        c4d = read_color4d(file)
+                        vcolor = mathutils.Color((c4d[0],c4d[1],c4d[2]))
+                    if FVF_UV:
+                        vuv = read_cfloat2(file)
+                    # add vertex to mesh
+                    vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
+                    vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
+                    uvs.append((vuv[0], (vuv[1] * -1) + 1))
+                    colors.append(vcolor)
+                # read indices
+                bm.verts.ensure_lookup_table()
+                num_indices = struct.unpack('H', file.read(2))[0]
+                # read our indices into an array
+                tristrip_data = struct.unpack('H' * num_indices, file.read(2 * num_indices))
+                #print("tristip_data len = " + str(len(tristrip_data)) + " of " + str(num_indices))
+                trilist_data = []
+                # convert all our strips
+                last_strip_cw = False
+                last_strip_indices = []
+                for us in tristrip_data:
+                    # flags
+                    FLAG_CW = ((us&(1<<14))!=0)
+                    FLAG_END = ((us&(1<<15))!=0)
+                    INDEX = us
+                    if FLAG_CW:
+                        INDEX = INDEX & ~(1<<14)
+                    if FLAG_END:
+                        INDEX = INDEX & ~(1<<15)
+                    # other stuff
+                    last_strip_cw = FLAG_CW
+                    last_strip_indices.append(INDEX)
+                    # are we done with this?
+                    if FLAG_END:
+                        trilist_data.extend(triangle_strip_to_list(last_strip_indices,last_strip_cw))
+                        last_strip_indices = []
+                for i in range(0,len(trilist_data),3):
+                    i1 = trilist_data[i] + current_vert_offset
+                    i2 = trilist_data[i+1] + current_vert_offset
+                    i3 = trilist_data[i+2] + current_vert_offset
+                    try:
+                        face = bm.faces.new((bm.verts[i1], bm.verts[i2], bm.verts[i3]))
+                        face.smooth = True
+                        face.material_index = ob_current_material
+                        # set uvs
+                        face.loops[0][uv_layer].uv = uvs[i1]
+                        face.loops[1][uv_layer].uv = uvs[i2]
+                        face.loops[2][uv_layer].uv = uvs[i3]
+                        # set colors
+                        face.loops[0][vc_layer] = colors[i1]
+                        face.loops[1][vc_layer] = colors[i2]
+                        face.loops[2][vc_layer] = colors[i3]
+                    except Exception as e:
+                        print ('PKG add face error :(')
+                        
+                current_vert_offset += num_vertices
+        else:
+            ##############################
+            # READ MIDTOWN MADNESS STRIP #
+            ##############################
+            for num2 in range(num_strips):
+                # primtype
+                file.seek(4, 1)
+                num_vertices = struct.unpack('L', file.read(4))[0]
+                # READ VERTICES HERE
+                for i in range(num_vertices):
+                    vpos = read_float3(file)
+                    vnorm = mathutils.Vector((1, 1, 1))
+                    vuv = (0,0)
+                    vcolor = mathutils.Color((1, 1, 1))
+                    if FVF_NORMALS:
+                        vnorm = read_float3(file)
+                    if FVF_COLOR:
+                        c4d = read_color4d(file)
+                        vcolor = mathutils.Color((c4d[0],c4d[1],c4d[2]))
+                    if FVF_UV:
+                        vuv = read_float2(file)
+                    # add vertex to mesh
+                    vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
+                    vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
+                    uvs.append((vuv[0], (vuv[1] * -1) + 1))
+                    colors.append(vcolor)
+                # read indices
+                bm.verts.ensure_lookup_table()
+                num_indices = struct.unpack('L', file.read(4))[0]
+                for i in range(int(num_indices/3)):
+                    face_data = struct.unpack('3H', file.read(6))
+                    i1 = face_data[0] + current_vert_offset
+                    i2 = face_data[1] + current_vert_offset
+                    i3 = face_data[2] + current_vert_offset
+                    try:
+                        face = bm.faces.new((bm.verts[i1], bm.verts[i2], bm.verts[i3]))
+                        face.smooth = True
+                        face.material_index = ob_current_material
+                        # set uvs
+                        face.loops[0][uv_layer].uv = uvs[i1]
+                        face.loops[1][uv_layer].uv = uvs[i2]
+                        face.loops[2][uv_layer].uv = uvs[i3]
+                        # set colors
+                        face.loops[0][vc_layer] = colors[i1]
+                        face.loops[1][vc_layer] = colors[i2]
+                        face.loops[2][vc_layer] = colors[i3]
+                    except Exception as e:
+                        print ('PKG add face error :(')
+                        print(str(e))
 
-            current_vert_offset += num_vertices
+                current_vert_offset += num_vertices
 
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
     bm.to_mesh(me)

@@ -8,9 +8,9 @@
 # ##### END LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Midtown Madness 2 PKG Format",
+    "name": "Angel Studios PKG Format",
     "author": "Dummiesman",
-    "version": (0, 1, 2),
+    "version": (0, 2, 0),
     "blender": (2, 76, 0),
     "location": "File > Import-Export",
     "description": "Import-Export PKG files",
@@ -76,6 +76,12 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
         default=False,
         )
         
+    e_vertexcolors = BoolProperty(
+        name="Vertex Colors",
+        description="Export vertex colors",
+        default=False,
+        )
+        
     def execute(self, context):
         from . import export_pkg
         
@@ -90,11 +96,11 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
 
 # Add to a menu
 def menu_func_export(self, context):
-    self.layout.operator(ExportPKG.bl_idname, text="Midtown Madness 2 (.pkg)")
+    self.layout.operator(ExportPKG.bl_idname, text="Angel Studios ModPackage (.pkg)")
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportPKG.bl_idname, text="Midtown Madness 2 (.pkg)")
+    self.layout.operator(ImportPKG.bl_idname, text="Angel Studios ModPackage (.pkg)")
 
 
 def register():
