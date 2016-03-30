@@ -19,9 +19,6 @@ import os.path as path
 from math import radians
 from io_scene_pkg.fvf import FVF
 
-global scn
-scn = None
-
 global pkg_path
 pkg_path = None
 
@@ -142,19 +139,17 @@ def read_shaders_file(file, length, offset):
         texture_name = read_angel_string(file)
         if texture_name == '':
             # matte material
-            texture_name = "mm2:notexture"
+            texture_name = "age:notexture"
         # initialize these
         diffuse_color = None
-        ambient_color = None
         specular_color = None
-        reflective_color = None
         if shader_type == "float":
-            ambient_color = read_color4f(file)
+            file.seek(16,1) # seek past unused ambient color
             diffuse_color = read_color4f(file)
             specular_color = read_color4f(file)
-            reflective_color = read_color4f(file)
+            file.seek(16,1) # seek past unused reflective color
         elif shader_type == "byte":
-            ambient_color = read_color4d(file)
+            file.seek(4,1) # seek past unused ambient color
             diffuse_color = read_color4d(file)
             specular_color = read_color4d(file)
         shininess = read_float(file)
@@ -312,7 +307,7 @@ def read_geometry_file(file, meshname):
                         face.loops[1][vc_layer] = colors[i2]
                         face.loops[2][vc_layer] = colors[i3]
                     except Exception as e:
-                        print ('PKG add face error :(')
+                        print(str(e))
 
                 current_vert_offset += num_vertices
         else:
@@ -362,7 +357,6 @@ def read_geometry_file(file, meshname):
                         face.loops[1][vc_layer] = colors[i2]
                         face.loops[2][vc_layer] = colors[i3]
                     except Exception as e:
-                        print ('PKG add face error :(')
                         print(str(e))
 
                 current_vert_offset += num_vertices
@@ -379,7 +373,7 @@ def read_geometry_file(file, meshname):
 ######################################################
 def load_pkg(filepath,
              context):
-    global SCN
+    # set the PKG path, used for finding textures
     global pkg_path
     pkg_path = filepath
 
@@ -389,26 +383,21 @@ def load_pkg(filepath,
         bpy.ops.object.select_all(action='DESELECT')
 
     time1 = time.clock()
-
     file = open(filepath, 'rb')
-    
 
-    scn = context.scene
-    SCN = scn
-
-    # PKG STUF
+    # start reading our pkg file
     PKGTYPE = file.read(4).decode("utf-8")
     if PKGTYPE != "PKG3":
         print('\tFatal Error:  PKG file is wrong format : ' + PKGTYPE)
         file.close()
         return
 
-    # READ PKG FILE DATA
+    # read pkg FILE's
     pkg_size = os.path.getsize(filepath)
     while file.tell() != pkg_size:
         file_header = file.read(4).decode("utf-8")
 
-        # check header
+        # check for an invalid header
         if file_header != "FILE":
             print('\tFatal Error: PKG file is corrupt, missing FILE header at ' + str(file.tell()))
             file.close()

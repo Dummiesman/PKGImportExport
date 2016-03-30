@@ -19,9 +19,6 @@ import os.path as path
 from math import radians
 from io_scene_pkg.fvf import FVF
 
-global scn
-scn = None
-
 global pkg_path
 pkg_path = None
 
@@ -333,8 +330,7 @@ def export_xrefs(file):
                 file.write(struct.pack('fff', obj.location[0], obj.location[2], obj.location[1] * -1))
                 # write xref name
                 file.write(bytes(xref_name, 'utf-8'))
-                for nullnum in range(null_length):
-                    file.write(bytes('\x00', 'utf-8'))
+                file.write(bytes('\x00' * null_length, 'utf-8'))
         file_length = file.tell() - xref_num_offset
         file.seek(xref_num_offset - 4, 0)
         file.write(struct.pack('LL', file_length, num_xrefs))
@@ -369,7 +365,7 @@ def export_shaders(file, replace_words, type="byte"):
             if mtl.active_texture is not None:
                 bname = mtl.active_texture.name  # use texture name instead
             mtl_name = get_undupe_name(mtl.name.replace(rwa[0], rwa[1]))
-            if mtl_name.startswith('mm2:notexture'):
+            if mtl_name.startswith('mm2:notexture') or mtl_name.startswith('age:notexture'):
                 # matte material
                 write_angel_string(file, '')
             else:
@@ -502,7 +498,6 @@ def save_pkg(filepath,
              g_autobound,
              e_vertexcolors,
              context):
-    global SCN
     global pkg_path
     pkg_path = filepath
 
@@ -512,11 +507,7 @@ def save_pkg(filepath,
         bpy.ops.object.select_all(action='DESELECT')
 
     time1 = time.clock()
-
     file = open(filepath, 'wb')
-
-    scn = context.scene
-    SCN = scn
 
     # first we need to figure out the export type before anything
     export_pred = generic_list
@@ -539,6 +530,7 @@ def save_pkg(filepath,
                 export_pred = trailer_list
                 break
     print('\tPKG autodetected export type: ' + export_typestr)
+    
     # unlink any unused materials at object level
     clean_object_materials()
     # remove any unused materials at scene level
@@ -556,11 +548,16 @@ def save_pkg(filepath,
 
     # WRITE PKG FILE
     file.write(bytes('PKG3', 'utf-8'))
+    print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
     export_meshes(file, reorder_objects(export_meshlist, export_pred), e_vertexcolors)
+    print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, get_replace_words(paintjobs), export_shadertype)
+    print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
     export_xrefs(file)
+    print('\t[%.4f] exporting offset' % (time.clock() - time1))
     export_offset(file)
     if g_autobound:
+        print('\t[%.4f] creating bound' % (time.clock() - time1))
         autobound()
     # PKG WRITE DONE
     print(" done in %.4f sec." % (time.clock() - time1))
