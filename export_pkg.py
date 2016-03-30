@@ -413,8 +413,9 @@ def export_meshes(file, meshlist, colors):
         # get mesh infos
         total_verts = len(bm.verts)
         total_faces = int(len(bm_tris) * 3)
-
         num_sections = len(obj.data.materials)
+        
+        #build FVF
         FVF_FLAGS = FVF(("D3DFVF_XYZ", "D3DFVF_NORMAL", "D3DFVF_TEX1"))
         for mat in obj.data.materials:
             if mat.use_shadeless:

@@ -279,14 +279,14 @@ def read_geometry_file(file, meshname):
                     FLAG_END = ((us & (1 << 15)) != 0)
                     INDEX = us
                     if FLAG_CW:
-                        INDEX = INDEX & ~(1 << 14)
+                        INDEX &= ~(1 << 14)
                     if FLAG_END:
-                        INDEX = INDEX & ~(1 << 15)
-                    # other stuff
+                        INDEX &= ~(1 << 15)
+                    # cw flag is only set at the first index in the strip
                     if len(last_strip_indices) == 0:
                         last_strip_cw = FLAG_CW
                     last_strip_indices.append(INDEX)
-                    # are we done with this?
+                    # are we done with this strip?
                     if FLAG_END:
                         trilist_data.extend(triangle_strip_to_list(last_strip_indices, last_strip_cw))
                         last_strip_indices = []
