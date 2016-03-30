@@ -426,7 +426,7 @@ def export_meshes(file, meshlist, colors):
                 fvf ^= 16
                 break
         if colors:
-            fvf = fvf | (1<<6)
+            fvf = fvf | (1 << 6)
 
         FVF_NORMALS = ((fvf & 16) != 0)
 
@@ -481,7 +481,7 @@ def export_meshes(file, meshlist, colors):
                     file.write(struct.pack('fff', vert.normal[0], vert.normal[2], vert.normal[1] * -1))
                 if colors:
                     vc_data = cmtl_colors[index_remap_table[vert.index]]
-                    file.write(struct.pack('BBBB',int(vc_data[0]*255),int(vc_data[1]*255),int(vc_data[2]*255),255))
+                    file.write(struct.pack('BBBB', int(vc_data[0] * 255), int(vc_data[1] * 255), int(vc_data[2] * 255), 255))
                 uv_data = cmtl_uvs[index_remap_table[vert.index]]
                 file.write(struct.pack('ff', uv_data[0], (uv_data[1] - 1) * -1))
             strip_indices = int(len(cmtl_faces) * 3)

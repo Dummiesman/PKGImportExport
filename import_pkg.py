@@ -61,8 +61,8 @@ def read_float3(file):
 
 
 def read_cfloat3(file):
-    btc = struct.unpack('bbb', file.read(3))
-    return btc[0]/128, btc[1]/128, btc[2]/128
+    btc = struct.unpack('BBB', file.read(3))
+    return (btc[0]-128)/128, (btc[1]-128)/128, (btc[2]-128)/128
 
 
 def read_cfloat2(file):
@@ -82,17 +82,27 @@ def read_color4d(file):
     c4d = struct.unpack('BBBB', file.read(4))
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
 
-lastob = ""
-    
-def triangle_strip_to_list(strip,clockwise):
+
+def check_degenerate(i1, i2, i3):
+    if i1 == i2 or i1 == i3 or i2 == i3:
+        return True
+    return False
+
+
+def triangle_strip_to_list(strip, clockwise):
     triangle_list = []
-    for v in range(2,len(strip)):
+    for v in range(2, len(strip)):
         if clockwise:
             triangle_list.extend([strip[v-2], strip[v], strip[v-1]])
         else:
             triangle_list.extend([strip[v], strip[v-2], strip[v-1]])
-        clockwise = not clockwise
+        # make sure we aren't resetting the clockwise
+        # flag if we have a degenerate triangle
+        if not check_degenerate(strip[v], strip[v-1], strip[v-2]):
+            clockwise = not clockwise
+
     return triangle_list
+
 
 ######################################################
 # IMPORT MAIN FILES
@@ -187,7 +197,8 @@ def read_xrefs(file):
         ob.show_name = True
         ob.show_axis = True
         scn.objects.link(ob)
-       
+
+
 def read_geometry_file(file, meshname):
     scn = bpy.context.scene
     # ADD THE MESH AND LINK IT TO THE SCENE
@@ -200,10 +211,10 @@ def read_geometry_file(file, meshname):
     uv_layer = bm.loops.layers.uv.new()
     tex_layer = bm.faces.layers.tex.new()
     vc_layer = bm.loops.layers.color.new()
-    
+
     scn.objects.link(ob)
     scn.objects.active = ob
-    
+
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     # THERE :) Now read file data
     num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('5L', file.read(20))
@@ -214,16 +225,16 @@ def read_geometry_file(file, meshname):
     colors = []
     ob_current_material = -1
     for num in range(num_sections):
-        #print("READING SECTION " + str(num))
         num_strips, strip_flags = struct.unpack('HH', file.read(4))
         shader_offset = 0
-        #strip flags
-        FLAG_compact_strips = ((strip_flags&(1<<8))!=0)
-        # print("DEBUG : FLAG_compact_strip == " + str(FLAG_compact_strips)) 
+        # strip flags
+        FLAG_compact_strips = ((strip_flags & (1 << 8)) != 0)
         # fvf flags
         FVF_NORMALS = ((fvf & 16) != 0)
         FVF_UV = ((fvf & 256) != 0)
-        FVF_COLOR = ((fvf&(1<<6))!=0)
+        FVF_COLOR = ((fvf & (1 << 6)) != 0)
+        FVF_COLORS = ((fvf & (1 << 7)) != 0)
+
         if FLAG_compact_strips:
             shader_offset = struct.unpack('H', file.read(2))[0]
         else:
@@ -234,7 +245,7 @@ def read_geometry_file(file, meshname):
             bpy.data.materials.new(name=str(shader_offset))
         ob.data.materials.append(bpy.data.materials.get(str(shader_offset)))
         ob_current_material += 1
-        
+
         if FLAG_compact_strips:
             ############################
             # READ MIDNIGHT CLUB STRIP #
@@ -245,14 +256,14 @@ def read_geometry_file(file, meshname):
                 num_vertices = struct.unpack('H', file.read(2))[0]
                 for i in range(num_vertices):
                     vpos = read_float3(file)
-                    vnorm = mathutils.Vector((1,1,1))
-                    vuv = (0,0)
+                    vnorm = mathutils.Vector((1, 1, 1))
+                    vuv = (0, 0)
                     vcolor = mathutils.Color((1, 1, 1))
                     if FVF_NORMALS:
                         vnorm = read_cfloat3(file)
-                    if FVF_COLOR:
+                    if FVF_COLOR or FVF_COLORS:
                         c4d = read_color4d(file)
-                        vcolor = mathutils.Color((c4d[0],c4d[1],c4d[2]))
+                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_UV:
                         vuv = read_cfloat2(file)
                     # add vertex to mesh
@@ -265,28 +276,28 @@ def read_geometry_file(file, meshname):
                 num_indices = struct.unpack('H', file.read(2))[0]
                 # read our indices into an array
                 tristrip_data = struct.unpack('H' * num_indices, file.read(2 * num_indices))
-                #print("tristip_data len = " + str(len(tristrip_data)) + " of " + str(num_indices))
                 trilist_data = []
                 # convert all our strips
                 last_strip_cw = False
                 last_strip_indices = []
                 for us in tristrip_data:
                     # flags
-                    FLAG_CW = ((us&(1<<14))!=0)
-                    FLAG_END = ((us&(1<<15))!=0)
+                    FLAG_CW = ((us & (1 << 14)) != 0)
+                    FLAG_END = ((us & (1 << 15)) != 0)
                     INDEX = us
                     if FLAG_CW:
-                        INDEX = INDEX & ~(1<<14)
+                        INDEX = INDEX & ~(1 << 14)
                     if FLAG_END:
-                        INDEX = INDEX & ~(1<<15)
+                        INDEX = INDEX & ~(1 << 15)
                     # other stuff
-                    last_strip_cw = FLAG_CW
+                    if len(last_strip_indices) == 0:
+                        last_strip_cw = FLAG_CW
                     last_strip_indices.append(INDEX)
                     # are we done with this?
                     if FLAG_END:
-                        trilist_data.extend(triangle_strip_to_list(last_strip_indices,last_strip_cw))
+                        trilist_data.extend(triangle_strip_to_list(last_strip_indices, last_strip_cw))
                         last_strip_indices = []
-                for i in range(0,len(trilist_data),3):
+                for i in range(0, len(trilist_data), 3):
                     i1 = trilist_data[i] + current_vert_offset
                     i2 = trilist_data[i+1] + current_vert_offset
                     i3 = trilist_data[i+2] + current_vert_offset
@@ -304,7 +315,7 @@ def read_geometry_file(file, meshname):
                         face.loops[2][vc_layer] = colors[i3]
                     except Exception as e:
                         print ('PKG add face error :(')
-                        
+
                 current_vert_offset += num_vertices
         else:
             ##############################
@@ -318,13 +329,13 @@ def read_geometry_file(file, meshname):
                 for i in range(num_vertices):
                     vpos = read_float3(file)
                     vnorm = mathutils.Vector((1, 1, 1))
-                    vuv = (0,0)
+                    vuv = (0, 0)
                     vcolor = mathutils.Color((1, 1, 1))
                     if FVF_NORMALS:
                         vnorm = read_float3(file)
-                    if FVF_COLOR:
+                    if FVF_COLOR or FVF_COLORS:
                         c4d = read_color4d(file)
-                        vcolor = mathutils.Color((c4d[0],c4d[1],c4d[2]))
+                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_UV:
                         vuv = read_float2(file)
                     # add vertex to mesh
