@@ -37,12 +37,12 @@ Created by Dummiesman
     To change the "Shininess" of a material, change the "Reflectivity" property under the "Mirror" section. It doesn't matter if the property is grayed out; it is still editable and will affect export.
 
   Geometry Flags
-    Applying the "Shadeless" tick in Materials settings will export any geometry with that material as shadeless in MM2
+    Applying the "Shadeless" tick in Materials settings will export any geometry with that material as shadeless in game
 
   Textures
     When exporting, the default texture name for a material will be the material name. If that material has a texture assigned to it in the textures tab, then the texture name will be used.
 
-    Matte materials should be named "mm2:notexture". It does not matter if Blender adds .001, .002, etc to the end of this, the exporter will ignore that.
+    Matte materials should be named "age:notexture". It does not matter if Blender adds .001, .002, etc to the end of this, the exporter will ignore that.
 
   XRefs
     To define an xref, simply name an empty object "xref:xrefname". Where xrefname is the name of the PKG file to xref e.g. "sp_parkmtr_f". Again it does not matter if Blender adds the .001 and so on. Make sure not to include the ".pkg" extension in the xref name.
@@ -80,7 +80,7 @@ Created by Dummiesman
     A:Blender automatically recalculates the normals when entering edit mode. To restore original, or close to original normals for default vehicles, use the remove doubles tool, then apply the Edge Split modifier at an angle above 80 degrees
 
   Q:Why is my UV mapping wrong?
-    A:Your UV mapping may appear to be wrong because MM2 uses per vertex UVs, while Blender uses per face UVs. Make sure all faces of the same material connect to each other in the UV mapper. You should also make sure all modifiers are applied before exporting.
+    A:Your UV mapping may appear to be wrong because AGE uses per vertex UVs, while Blender uses per face UVs. Make sure all faces of the same material connect to each other in the UV mapper. You should also make sure all modifiers are applied before exporting.
 
 6.Upcoming/Planned Features
   -BND/BBND Import-export 
