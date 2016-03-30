@@ -17,6 +17,7 @@ import mathutils
 from mathutils import*
 import os.path as path
 from math import radians
+from io_scene_pkg.fvf import FVF
 
 global scn
 scn = None
@@ -418,24 +419,22 @@ def export_meshes(file, meshlist, colors):
         total_faces = int(len(bm_tris) * 3)
 
         num_sections = len(obj.data.materials)
-        fvf = 2 ^ 256 ^ 16  # coord[2],uv[256],normal[16]
+        FVF_FLAGS = FVF(("D3DFVF_XYZ", "D3DFVF_NORMAL", "D3DFVF_TEX1"))
         for mat in obj.data.materials:
             if mat.use_shadeless:
                 # undo the previous flag since we arent
                 # going to write normals
-                fvf ^= 16
+                FVF_FLAGS.clear_flag("D3DFVF_NORMAL")
                 break
         if colors:
-            fvf = fvf | (1 << 6)
-
-        FVF_NORMALS = ((fvf & 16) != 0)
+            FVF_FLAGS.set_flag("D3DFVF_DIFFUSE")
 
         # do we need a matrix file. Only for H object
         if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
             write_matrix(obj.name, obj)
 
         # write mesh data header
-        file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, fvf))
+        file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
 
         # write sections
         cmtl_index = 0
@@ -477,9 +476,9 @@ def export_meshes(file, meshlist, colors):
             file.write(struct.pack('LL', strip_primType, strip_vertices))
             for vert in cmtl_vertices:
                 file.write(struct.pack('fff', vert.co[0], vert.co[2], vert.co[1] * -1))
-                if FVF_NORMALS:
+                if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                     file.write(struct.pack('fff', vert.normal[0], vert.normal[2], vert.normal[1] * -1))
-                if colors:
+                if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE") or FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
                     vc_data = cmtl_colors[index_remap_table[vert.index]]
                     file.write(struct.pack('BBBB', int(vc_data[0] * 255), int(vc_data[1] * 255), int(vc_data[2] * 255), 255))
                 uv_data = cmtl_uvs[index_remap_table[vert.index]]

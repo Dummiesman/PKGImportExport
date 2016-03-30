@@ -17,6 +17,7 @@ import mathutils
 from mathutils import*
 import os.path as path
 from math import radians
+from io_scene_pkg.fvf import FVF
 
 global scn
 scn = None
@@ -230,10 +231,7 @@ def read_geometry_file(file, meshname):
         # strip flags
         FLAG_compact_strips = ((strip_flags & (1 << 8)) != 0)
         # fvf flags
-        FVF_NORMALS = ((fvf & 16) != 0)
-        FVF_UV = ((fvf & 256) != 0)
-        FVF_COLOR = ((fvf & (1 << 6)) != 0)
-        FVF_COLORS = ((fvf & (1 << 7)) != 0)
+        FVF_FLAGS = FVF(fvf)
 
         if FLAG_compact_strips:
             shader_offset = struct.unpack('H', file.read(2))[0]
@@ -259,12 +257,12 @@ def read_geometry_file(file, meshname):
                     vnorm = mathutils.Vector((1, 1, 1))
                     vuv = (0, 0)
                     vcolor = mathutils.Color((1, 1, 1))
-                    if FVF_NORMALS:
+                    if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                         vnorm = read_cfloat3(file)
-                    if FVF_COLOR or FVF_COLORS:
+                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE") or FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
                         c4d = read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
-                    if FVF_UV:
+                    if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
                         vuv = read_cfloat2(file)
                     # add vertex to mesh
                     vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
@@ -331,12 +329,12 @@ def read_geometry_file(file, meshname):
                     vnorm = mathutils.Vector((1, 1, 1))
                     vuv = (0, 0)
                     vcolor = mathutils.Color((1, 1, 1))
-                    if FVF_NORMALS:
+                    if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                         vnorm = read_float3(file)
-                    if FVF_COLOR or FVF_COLORS:
+                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE") or FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
                         c4d = read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
-                    if FVF_UV:
+                    if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
                         vuv = read_float2(file)
                     # add vertex to mesh
                     vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
@@ -393,7 +391,7 @@ def load_pkg(filepath,
     time1 = time.clock()
 
     file = open(filepath, 'rb')
-    pkg_size = os.path.getsize(filepath)
+    
 
     scn = context.scene
     SCN = scn
@@ -406,6 +404,7 @@ def load_pkg(filepath,
         return
 
     # READ PKG FILE DATA
+    pkg_size = os.path.getsize(filepath)
     while file.tell() != pkg_size:
         file_header = file.read(4).decode("utf-8")
 
@@ -418,6 +417,12 @@ def load_pkg(filepath,
         # found a proper FILE header
         file_name = read_angel_string(file)
         file_length = struct.unpack('L', file.read(4))[0]
+        
+        # Angel released a very small batch of corrupt PKG files
+        # this is here just in case someone tries to import one
+        if file_length == 0:
+            raise Exception("Invalid PKG3 file : cannot have file length of 0")
+            
         print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
         if file_name == "shaders":
             # load shaders file
