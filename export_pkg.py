@@ -121,6 +121,10 @@ def write_angel_string(file, strng):
         file.write(struct.pack('B', 0))
 
 
+def write_color(file, color):
+    file.write(struct.pack('BBBB', int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), 255))
+
+
 def write_file_header(file, name, length=0):
     file.write(bytes('FILE', 'utf-8'))
     write_angel_string(file, name)
@@ -182,6 +186,7 @@ def bounds(obj):
 
     o_details = collections.namedtuple('object_details', 'x y z')
     return o_details(**originals)
+
 
 def write_matrix(meshname, object):
     mesh_name_parsed = get_raw_object_name(meshname)
@@ -403,7 +408,7 @@ def export_bounds():
     return
 
 
-def export_meshes(file, meshlist, colors):
+def export_meshes(file, meshlist, options):
     for obj in meshlist:
         write_file_header(file, obj.name)
         file_data_start_offset = file.tell()
@@ -423,8 +428,10 @@ def export_meshes(file, meshlist, colors):
                 # going to write normals
                 FVF_FLAGS.clear_flag("D3DFVF_NORMAL")
                 break
-        if colors:
+        if "VC_DIFFUSE" in options:
             FVF_FLAGS.set_flag("D3DFVF_DIFFUSE")
+        if "VC_SPECULAR" in options:
+            FVF_FLAGS.set_flag("D3DFVF_SPECULAR")
 
         # do we need a matrix file. Only for H object
         if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
@@ -459,9 +466,11 @@ def export_meshes(file, meshlist, colors):
                             if vc_layer is not None:
                                 cmtl_colors.append(l[vc_layer])
                     cmtl_faces.append(cface)
-            # make a blank uv map if we have none
+            # create a blank color+uv map if needed
             if len(cmtl_uvs) == 0:
                 cmtl_uvs = [(0, 0)] * len(cmtl_vertices)
+            if len(cmtl_colors) == 0:
+                cmtl_colors = [(1, 1, 1)] * len(cmtl_vertices)
             # mesh remap done!
             num_strips = 1
             section_flags = 0
@@ -475,9 +484,10 @@ def export_meshes(file, meshlist, colors):
                 file.write(struct.pack('fff', vert.co[0], vert.co[2], vert.co[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                     file.write(struct.pack('fff', vert.normal[0], vert.normal[2], vert.normal[1] * -1))
-                if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE") or FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                    vc_data = cmtl_colors[index_remap_table[vert.index]]
-                    file.write(struct.pack('BBBB', int(vc_data[0] * 255), int(vc_data[1] * 255), int(vc_data[2] * 255), 255))
+                if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
+                    write_color(file, cmtl_colors[index_remap_table[vert.index]])
+                if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
+                    write_color(file, cmtl_colors[index_remap_table[vert.index]])
                 uv_data = cmtl_uvs[index_remap_table[vert.index]]
                 file.write(struct.pack('ff', uv_data[0], (uv_data[1] - 1) * -1))
             strip_indices = int(len(cmtl_faces) * 3)
@@ -498,6 +508,7 @@ def save_pkg(filepath,
              paintjobs,
              g_autobound,
              e_vertexcolors,
+             e_vertexcolors_s,
              context):
     global pkg_path
     pkg_path = filepath
@@ -509,7 +520,14 @@ def save_pkg(filepath,
 
     time1 = time.clock()
     file = open(filepath, 'wb')
-
+    
+    # create our options list
+    export_options = []
+    if e_vertexcolors:
+        export_options.append("VC_DIFFUSE")
+    if e_vertexcolors_s:
+        export_options.append("VC_SPECULAR")
+    
     # first we need to figure out the export type before anything
     export_pred = generic_list
     export_typestr = 'generic'
@@ -550,7 +568,7 @@ def save_pkg(filepath,
     # WRITE PKG FILE
     file.write(bytes('PKG3', 'utf-8'))
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
-    export_meshes(file, reorder_objects(export_meshlist, export_pred), e_vertexcolors)
+    export_meshes(file, reorder_objects(export_meshlist, export_pred), export_options)
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, get_replace_words(paintjobs), export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
@@ -570,13 +588,15 @@ def save(operator,
          filepath="",
          additional_paintjobs="",
          g_autobound=False,
-         e_vertexcolors=False
+         e_vertexcolors=False,
+         e_vertexcolors_s=False
          ):
 
     save_pkg(filepath,
              additional_paintjobs,
              g_autobound,
              e_vertexcolors,
+             e_vertexcolors_s,
              context,
              )
 

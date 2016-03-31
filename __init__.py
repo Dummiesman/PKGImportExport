@@ -77,8 +77,14 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
         )
         
     e_vertexcolors = BoolProperty(
-        name="Vertex Colors",
-        description="Export vertex colors",
+        name="Vertex Colors (Diffuse)",
+        description="Export vertex colors that affect diffuse",
+        default=False,
+        )
+        
+    e_vertexcolors_s = BoolProperty(
+        name="Vertex Colors (Specular)",
+        description="Export vertex colors that affect specular",
         default=False,
         )
         

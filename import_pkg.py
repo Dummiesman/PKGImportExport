@@ -254,7 +254,10 @@ def read_geometry_file(file, meshname):
                     vcolor = mathutils.Color((1, 1, 1))
                     if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                         vnorm = read_cfloat3(file)
-                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE") or FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
+                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
+                        c4d = read_color4d(file)
+                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
+                    if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
                         c4d = read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
@@ -326,7 +329,10 @@ def read_geometry_file(file, meshname):
                     vcolor = mathutils.Color((1, 1, 1))
                     if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                         vnorm = read_float3(file)
-                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE") or FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
+                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
+                        c4d = read_color4d(file)
+                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
+                    if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
                         c4d = read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
