@@ -446,53 +446,86 @@ def export_meshes(file, meshlist, options):
             # build the mesh data we need
             uv_layer = bm.loops.layers.uv.active
             vc_layer = bm.loops.layers.color.active
-            index_remap_table = {}
-            cmtl_faces = []
-            cmtl_vertices = []
+
+            # initialize lists for conversion
+            cmtl_indices = []
+            cmtl_tris = []
+            cmtl_verts = []
             cmtl_uvs = []
-            cmtl_colors = []
+            cmtl_cols = []
+            
+            # build tris that are in this material pass
             for lt in bm_tris:
                 if lt[0].face.material_index == cmtl_index:
-                    cface = []
-                    for l in lt:
-                        if l.vert.index in index_remap_table:
-                            cface.append(index_remap_table[l.vert.index])
+                  cmtl_tris.append(lt)
+            
+            # BECAUSE THIS GAME WANTS VERT INDEXES AND NOT FACE INDEXES D:
+            index_remap_table = {}
+            for lt in cmtl_tris:
+                #funstuff :|
+                indices = [-1, -1, -1]
+                for x in range(3):
+                    l = lt[x]
+                    # prepare our hash entry
+                    uv_hash = "NOUV"
+                    col_hash = "NOCOL"
+                    pos_hash = str(l.vert.co)
+                    nrm_hash = str(l.vert.normal)
+                    if uv_layer is not None:
+                        uv_hash = str(l[uv_layer].uv)
+                    if vc_layer is not None:
+                        col_hash = str(l[vc_layer])
+                    index_hash = uv_hash + "|" + col_hash + "|" + pos_hash + "|" + nrm_hash
+
+                    # do we already have a vertex for this?
+                    if index_hash in index_remap_table:
+                        indices[x] = index_remap_table[index_hash]
+                    else:
+                        # get what our next index will be and append to remap table
+                        next_index = len(cmtl_verts)
+                        index_remap_table[index_hash] = next_index
+                        indices[x] = next_index
+
+                        # add neccessary data to remapping tables
+                        cmtl_verts.append(l.vert)
+
+                        if uv_layer is not None:
+                            cmtl_uvs.append(l[uv_layer].uv)
                         else:
-                            index_remap_table[l.vert.index] = len(cmtl_vertices)
-                            cface.append(index_remap_table[l.vert.index])
-                            cmtl_vertices.append(l.vert)
-                            if uv_layer is not None:
-                                cmtl_uvs.append(l[uv_layer].uv)
-                            if vc_layer is not None:
-                                cmtl_colors.append(l[vc_layer])
-                    cmtl_faces.append(cface)
-            # create a blank color+uv map if needed
-            if len(cmtl_uvs) == 0:
-                cmtl_uvs = [(0, 0)] * len(cmtl_vertices)
-            if len(cmtl_colors) == 0:
-                cmtl_colors = [(1, 1, 1)] * len(cmtl_vertices)
-            # mesh remap done!
+                            cmtl_uvs.append((0,0))
+
+                        if vc_layer is not None:
+                            cmtl_cols.append(l[vc_layer])
+                        else:
+                            cmtl_cols.append((0,0,0,0))
+
+                # finally append this triangle                
+                cmtl_indices.append(indices)        
+
+            # mesh remap done. we will now write our strip
             num_strips = 1
             section_flags = 0
             shader_offset = get_material_offset(mat)
+            # write strip to file
             file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
-            # WRITE STRIP
             strip_primType = 3
-            strip_vertices = len(cmtl_vertices)
+            strip_vertices = len(cmtl_verts)
             file.write(struct.pack('LL', strip_primType, strip_vertices))
-            for vert in cmtl_vertices:
-                file.write(struct.pack('fff', vert.co[0], vert.co[2], vert.co[1] * -1))
+            for cv in range(len(cmtl_verts)):
+                export_vert = cmtl_verts[cv]
+                file.write(struct.pack('fff', export_vert.co[0], export_vert.co[2], export_vert.co[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                    file.write(struct.pack('fff', vert.normal[0], vert.normal[2], vert.normal[1] * -1))
-                if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                    write_color(file, cmtl_colors[index_remap_table[vert.index]])
+                    file.write(struct.pack('fff', export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                    write_color(file, cmtl_colors[index_remap_table[vert.index]])
-                uv_data = cmtl_uvs[index_remap_table[vert.index]]
+                    write_color(file, cmtl_cols[cv])
+                if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
+                    write_color(file, cmtl_cols[cv])
+                uv_data = cmtl_uvs[cv]
                 file.write(struct.pack('ff', uv_data[0], (uv_data[1] - 1) * -1))
-            strip_indices = int(len(cmtl_faces) * 3)
-            file.write(struct.pack('L', strip_indices))
-            for ply in cmtl_faces:
+                
+            strip_indices_len = int(len(cmtl_indices) * 3)
+            file.write(struct.pack('L', strip_indices_len))
+            for ply in cmtl_indices:
                 file.write(struct.pack('HHH', ply[0], ply[1], ply[2]))
             cmtl_index += 1
 

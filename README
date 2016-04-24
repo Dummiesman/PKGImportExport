@@ -79,9 +79,6 @@ Created by Dummiesman
   Q:Why do the imported normals get overwritten when I enter edit mode?
     A:Blender automatically recalculates the normals when entering edit mode. To restore original, or close to original normals for default vehicles, use the remove doubles tool, then apply the Edge Split modifier at an angle above 80 degrees
 
-  Q:Why is my UV mapping wrong?
-    A:Your UV mapping may appear to be wrong because AGE uses per vertex UVs, while Blender uses per face UVs. Make sure all faces of the same material connect to each other in the UV mapper. You should also make sure all modifiers are applied before exporting.
-
 6.Upcoming/Planned Features
   -BND/BBND Import-export 
   
