@@ -22,6 +22,9 @@ from io_scene_pkg.fvf import FVF
 global pkg_path
 pkg_path = None
 
+global apply_modifiers_G
+apply_modifiers_G = True
+
 ######################################################
 # GLOBAL LISTS
 ######################################################
@@ -90,7 +93,17 @@ generic_list = ["H", "M", "L", "VL",
                 "BREAK06_H", "BREAK06_M", "BREAK06_L", "BREAK06_VL",
                 "BREAK07_H", "BREAK07_M", "BREAK07_L", "BREAK07_VL",
                 "BREAK08_H", "BREAK08_M", "BREAK08_L", "BREAK08_VL",
-                "BREAK09_H", "BREAK09_M", "BREAK09_L", "BREAK09_VL"]
+                "BREAK09_H", "BREAK09_M", "BREAK09_L", "BREAK09_VL",
+                "REDGLOWDAY_H", "REDGLOWDAY_M", "REDGLOWDAY_L", "REDGLOWDAY_VL",
+                "YELLOWGLOWDAY_H", "YELLOWGLOWDAY_M", "YELLOWGLOWDAY_L", "YELLOWGLOWDAY_VL",
+                "GREENGLOWDAY_H", "GREENGLOWDAY_M", "GREENGLOWDAY_L", "GREENGLOWDAY_VL",
+                "WALK_DAY_H", "WALK_DAY_M", "WALK_DAY_L", "WALK_DAY_VL",
+                "NOWALK_DAY_H", "NOWALK_DAY_M", "NOWALK_DAY_L", "NOWALK_DAY_VL",
+                "REDGLOWNIGHT_H", "REDGLOWNIGHT_M", "REDGLOWNIGHT_L", "REDGLOWNIGHT_VL",
+                "YELLOWGLOWNIGHT_H", "YELLOWGLOWNIGHT_M", "YELLOWGLOWNIGHT_L", "YELLOWGLOWNIGHT_VL",
+                "GREENGLOWNIGHT_H", "GREENGLOWNIGHT_M", "GREENGLOWNIGHT_L", "GREENGLOWNIGHT_VL",
+                "WALK_NIGHT_H", "WALK_NIGHT_M", "WALK_NIGHT_L", "WALK_NIGHT_VL",
+                "NOWALK_NIGHT_H", "NOWALK_NIGHT_M", "NOWALK_NIGHT_L", "NOWALK_NIGHT_VL"]
 
 # do not export' list
 dne_list = ["BOUND", "BINARY_BOUND",
@@ -326,14 +339,16 @@ def export_xrefs(file):
         file.write(struct.pack('L', 0))
         for obj in bpy.data.objects:
             if obj.name.startswith("xref:"):
-                xref_name = get_undupe_name(obj.name[5:])
-                null_length = 32 - len(xref_name)
                 num_xrefs += 1
                 # write null matrices
                 file.write(struct.pack('fffffffff', 0, 0, 0, 0, 0, 0, 0, 0, 0))
                 # convert location and write it
                 file.write(struct.pack('fff', obj.location[0], obj.location[2], obj.location[1] * -1))
+               
                 # write xref name
+                xref_name = get_undupe_name(obj.name[5:]) + ".max"
+                null_length = 32 - len(xref_name)
+                
                 file.write(bytes(xref_name, 'utf-8'))
                 file.write(bytes('\x00' * null_length, 'utf-8'))
         file_length = file.tell() - xref_num_offset
@@ -403,17 +418,18 @@ def export_shaders(file, replace_words, type="byte"):
     file.seek(0, 2)
 
 
-def export_bounds():
-    # TODO :)
-    return
-
-
 def export_meshes(file, meshlist, options):
     for obj in meshlist:
+        # write FILE header for mesh name
         write_file_header(file, obj.name)
         file_data_start_offset = file.tell()
+        
+        # create temp mesh
+        temp_mesh = obj.to_mesh(bpy.context.scene, apply_modifiers_G, 'PREVIEW')
+        
+        # get bmesh
         bm = bmesh.new()
-        bm.from_mesh(obj.data)
+        bm.from_mesh(temp_mesh)
         bm_tris = bm.calc_tessface()
         # get mesh infos
         total_verts = len(bm.verts)
@@ -528,7 +544,11 @@ def export_meshes(file, meshlist, options):
             for ply in cmtl_indices:
                 file.write(struct.pack('HHH', ply[0], ply[1], ply[2]))
             cmtl_index += 1
-
+        
+        # clean up temp_mesh
+        bpy.data.meshes.remove(temp_mesh)
+            
+        # write FILE length
         file_data_length = file.tell() - file_data_start_offset
         file.seek(file_data_start_offset - 4)
         file.write(struct.pack('L', file_data_length))
@@ -622,9 +642,16 @@ def save(operator,
          additional_paintjobs="",
          g_autobound=False,
          e_vertexcolors=False,
-         e_vertexcolors_s=False
+         e_vertexcolors_s=False,
+         apply_modifiers=False
          ):
-
+    
+    
+    # set globals
+    global apply_modifiers_G
+    apply_modifiers_G = apply_modifiers
+    
+    # save PKG
     save_pkg(filepath,
              additional_paintjobs,
              g_autobound,

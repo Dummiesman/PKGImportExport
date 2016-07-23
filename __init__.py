@@ -10,7 +10,7 @@
 bl_info = {
     "name": "Angel Studios PKG Format",
     "author": "Dummiesman",
-    "version": (0, 2, 2),
+    "version": (0, 2, 3),
     "blender": (2, 76, 0),
     "location": "File > Import-Export",
     "description": "Import-Export PKG files",
@@ -86,6 +86,12 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
         name="Vertex Colors (Specular)",
         description="Export vertex colors that affect specular",
         default=False,
+        )
+        
+    apply_modifiers = BoolProperty(
+        name="Apply Modifiers",
+        description="Do you desire modifiers to be applied in the PKG?",
+        default=True,
         )
         
     def execute(self, context):

@@ -144,13 +144,13 @@ def read_shaders_file(file, length, offset):
         diffuse_color = None
         specular_color = None
         if shader_type == "float":
-            file.seek(16,1) # seek past unused ambient color
             diffuse_color = read_color4f(file)
+            file.seek(16,1) # seek past"" diffuse""
             specular_color = read_color4f(file)
             file.seek(16,1) # seek past unused reflective color
         elif shader_type == "byte":
-            file.seek(4,1) # seek past unused ambient color
             diffuse_color = read_color4d(file)
+            file.seek(4,1) # seek past ""diffuse""            
             specular_color = read_color4d(file)
         shininess = read_float(file)
 
