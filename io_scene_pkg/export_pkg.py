@@ -395,7 +395,7 @@ def export_shaders(file, replace_words, type="byte"):
             # calculate alpha for writing
             mtl_alpha = 1
             if mtl.use_transparency:
-                mtl_alpha -= mtl.alpha
+                mtl_alpha = mtl.alpha
 
             if type == "byte":
                 file.write(struct.pack('BBBB', int(mtl.diffuse_color[0] * 255), int(mtl.diffuse_color[1] * 255), int(mtl.diffuse_color[2] * 255), int(mtl_alpha * 255)))
