@@ -246,6 +246,17 @@ def find_object_ci(name):
             return obj
     return None
 
+
+def handle_replace_logic(rw1, rw2, rpd):
+	# exact match mode? return replace word
+	if rw1.startswith("\"") and rw1.endswith("\""):
+		matchto = rw1[1:-1].lower()
+		if rpd.lower() == matchto:
+			return rw2
+	
+	# basic logic
+	return rpd.replace(rw1, rw2)
+
 ######################################################
 # EXPORT MAIN FILES
 ######################################################
@@ -381,10 +392,14 @@ def export_shaders(file, replace_words, type="byte"):
     for rwa in replace_words:
         # export a material set
         for mtl in bpy.data.materials:
-            bname = mtl.name
-            if mtl.active_texture is not None:
-                bname = mtl.active_texture.name  # use texture name instead
-            mtl_name = get_undupe_name(mtl.name.replace(rwa[0], rwa[1]))
+            #bname = mtl.name
+			
+            #if mtl.active_texture is not None:
+            #    bname = mtl.active_texture.name  # use texture name instead
+			
+			# handle material name replacement
+            mtl_name = handle_replace_logic(rwa[0], rwa[1], get_undupe_name(mtl.name))
+			
             if mtl_name.startswith('mm2:notexture') or mtl_name.startswith('age:notexture'):
                 # matte material
                 write_angel_string(file, '')
