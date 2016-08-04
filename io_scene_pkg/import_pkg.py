@@ -18,6 +18,7 @@ from mathutils import*
 import os.path as path
 from math import radians
 from io_scene_pkg.fvf import FVF
+import io_scene_pkg.binary_helper as bin
 
 global pkg_path
 pkg_path = None
@@ -25,16 +26,6 @@ pkg_path = None
 ######################################################
 # IMPORT HELPERS
 ######################################################
-def read_angel_string(file):
-    str_len = struct.unpack('B', file.read(1))[0]
-    if str_len == 0:
-        return ''
-    else:
-        return_string = file.read(str_len - 1).decode("utf-8")
-        file.seek(1, 1)
-        return return_string
-
-
 def get_raw_object_name(meshname):
     return meshname.replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
 
@@ -49,36 +40,6 @@ def find_matrix(meshname, object):
         object.location = (mtx_info[9], mtx_info[11] * -1, mtx_info[10])
     return
 
-
-def read_float(file):
-    return struct.unpack('f', file.read(4))[0]
-
-
-def read_float3(file):
-    return struct.unpack('fff', file.read(12))
-
-
-def read_cfloat3(file):
-    btc = struct.unpack('BBB', file.read(3))
-    return (btc[0]-128)/128, (btc[1]-128)/128, (btc[2]-128)/128
-
-
-def read_cfloat2(file):
-    stc = struct.unpack('HH', file.read(4))
-    return (stc[0]/128) - 128, (stc[1]/128) - 128
-
-
-def read_float2(file):
-    return struct.unpack('ff', file.read(8))
-
-
-def read_color4f(file):
-    return struct.unpack('ffff', file.read(16))
-
-
-def read_color4d(file):
-    c4d = struct.unpack('BBBB', file.read(4))
-    return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
 
 
 def check_degenerate(i1, i2, i3):
@@ -136,7 +97,7 @@ def read_shaders_file(file, length, offset):
 
     for num in range(shaders_per_paintjob):
         # read in only ONE set of shaders. No need for more
-        texture_name = read_angel_string(file)
+        texture_name = bin.read_angel_string(file)
         if texture_name == '':
             # matte material
             texture_name = "age:notexture"
@@ -144,15 +105,15 @@ def read_shaders_file(file, length, offset):
         diffuse_color = None
         specular_color = None
         if shader_type == "float":
-            diffuse_color = read_color4f(file)
+            diffuse_color = bin.read_color4f(file)
             file.seek(16,1) # seek past"" diffuse""
-            specular_color = read_color4f(file)
+            specular_color = bin.read_color4f(file)
             file.seek(16,1) # seek past unused reflective color
         elif shader_type == "byte":
-            diffuse_color = read_color4d(file)
+            diffuse_color = bin.read_color4d(file)
             file.seek(4,1) # seek past ""diffuse""            
-            specular_color = read_color4d(file)
-        shininess = read_float(file)
+            specular_color = bin.read_color4d(file)
+        shininess = bin.read_float(file)
 
         # insert this data
         mtl = bpy.data.materials.get(str(num))
@@ -185,8 +146,9 @@ def read_xrefs(file):
     for num in range(num_xrefs):
         # skip matrix for now :(
         file.seek(36, 1)
+
         # get position
-        xref_position = read_float3(file)
+        xref_position = bin.read_float3(file)
         xref_name = file.read(32).decode("utf-8")
         ob = bpy.data.objects.new("xref:" + xref_name, None)
         ob.location = (xref_position[0], xref_position[2] * -1, xref_position[1])
@@ -223,6 +185,7 @@ def read_geometry_file(file, meshname):
     for num in range(num_sections):
         num_strips, strip_flags = struct.unpack('HH', file.read(4))
         shader_offset = 0
+        
         # strip flags
         FLAG_compact_strips = ((strip_flags & (1 << 8)) != 0)
         # fvf flags
@@ -232,6 +195,7 @@ def read_geometry_file(file, meshname):
             shader_offset = struct.unpack('H', file.read(2))[0]
         else:
             shader_offset = struct.unpack('L', file.read(4))[0]
+        
         # do we have this material?
         if bpy.data.materials.get(str(shader_offset)) is None:
             # we must make it
@@ -248,20 +212,20 @@ def read_geometry_file(file, meshname):
                 file.seek(2, 1)
                 num_vertices = struct.unpack('H', file.read(2))[0]
                 for i in range(num_vertices):
-                    vpos = read_float3(file)
+                    vpos = bin.read_float3(file)
                     vnorm = mathutils.Vector((1, 1, 1))
                     vuv = (0, 0)
                     vcolor = mathutils.Color((1, 1, 1))
                     if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                        vnorm = read_cfloat3(file)
+                        vnorm = bin.read_cfloat3(file)
                     if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                        c4d = read_color4d(file)
+                        c4d = bin.read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                        c4d = read_color4d(file)
+                        c4d = bin.read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
-                        vuv = read_cfloat2(file)
+                        vuv = bin.read_cfloat2(file)
                     # add vertex to mesh
                     vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
                     vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
@@ -323,20 +287,20 @@ def read_geometry_file(file, meshname):
                 num_vertices = struct.unpack('L', file.read(4))[0]
                 # READ VERTICES HERE
                 for i in range(num_vertices):
-                    vpos = read_float3(file)
+                    vpos = bin.read_float3(file)
                     vnorm = mathutils.Vector((1, 1, 1))
                     vuv = (0, 0)
                     vcolor = mathutils.Color((1, 1, 1))
                     if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                        vnorm = read_float3(file)
+                        vnorm = bin.read_float3(file)
                     if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                        c4d = read_color4d(file)
+                        c4d = bin.read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
                         c4d = read_color4d(file)
                         vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
                     if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
-                        vuv = read_float2(file)
+                        vuv = bin.read_float2(file)
                     # add vertex to mesh
                     vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
                     vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
@@ -410,7 +374,7 @@ def load_pkg(filepath,
             return
 
         # found a proper FILE header
-        file_name = read_angel_string(file)
+        file_name = bin.read_angel_string(file)
         file_length = struct.unpack('L', file.read(4))[0]
         
         # Angel released a very small batch of corrupt PKG files

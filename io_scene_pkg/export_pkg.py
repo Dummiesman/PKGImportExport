@@ -11,19 +11,27 @@ import os
 import time
 import struct
 
-import bpy
-import bmesh
-import mathutils
+import bpy, bmesh
 from mathutils import*
 import os.path as path
+
 from math import radians
 from io_scene_pkg.fvf import FVF
 
+import io_scene_pkg.binary_helper as bin
+import io_scene_pkg.export_helper as helper
+
+
+# globals
 global pkg_path
 pkg_path = None
 
 global apply_modifiers_G
 apply_modifiers_G = True
+
+global material_remap_table
+material_remap_table = {}
+
 
 ######################################################
 # GLOBAL LISTS
@@ -124,39 +132,9 @@ def reorder_objects(lst, pred):
     return [x for x in return_list if x is not None]
 
 
-def write_angel_string(file, strng):
-    str_len = len(strng)
-    if str_len > 0:
-        file.write(struct.pack('B', str_len+1))
-        file.write(bytes(strng, 'UTF-8'))
-        file.write(bytes('\x00', 'UTF-8'))
-    else:
-        file.write(struct.pack('B', 0))
-
-
-def write_color(file, color):
-    file.write(struct.pack('BBBB', int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), 255))
-
-
-def write_file_header(file, name, length=0):
-    file.write(bytes('FILE', 'utf-8'))
-    write_angel_string(file, name)
-    file.write(struct.pack('L', length))
-
-
 def get_undupe_name(name):
     nidx = name.find('.')
     return name[:nidx] if nidx != -1 else name
-
-
-def get_material_offset(mtl):
-    # :( hack
-    coffset = 0
-    for mat in bpy.data.materials:
-        if mtl.name == mat.name:
-            return coffset
-        coffset += 1
-    return -1
 
 
 def get_raw_object_name(meshname):
@@ -225,21 +203,6 @@ def write_matrix(meshname, object):
     return
 
 
-def clean_object_materials():
-    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-    for ob in bpy.data.objects:
-        if ob.type != 'MESH':
-            continue
-        mat_slots = {}
-        for p in ob.data.polygons:
-            mat_slots[p.material_index] = 1
-        mat_slots = mat_slots.keys()
-        for i in reversed(range(len(ob.material_slots))):
-            if i not in mat_slots:
-                bpy.context.scene.objects.active = ob
-                ob.data.materials.pop(i)
-
-
 def find_object_ci(name):
     for obj in bpy.data.objects:
         if obj.name.lower() == name.lower():
@@ -248,14 +211,14 @@ def find_object_ci(name):
 
 
 def handle_replace_logic(rw1, rw2, rpd):
-	# exact match mode? return replace word
-	if rw1.startswith("\"") and rw1.endswith("\""):
-		matchto = rw1[1:-1].lower()
-		if rpd.lower() == matchto:
-			return rw2
-	
-	# basic logic
-	return rpd.replace(rw1, rw2)
+  # exact match mode? return replace word
+  if rw1.startswith("\"") and rw1.endswith("\""):
+    matchto = rw1[1:-1].lower()
+    if rpd.lower() == matchto:
+      return rw2
+  
+  # basic logic
+  return rpd.replace(rw1, rw2)
 
 ######################################################
 # EXPORT MAIN FILES
@@ -344,14 +307,14 @@ def export_xrefs(file):
             has_xrefs = True
             break
     if has_xrefs:
-        write_file_header(file, "xrefs")
+        bin.write_file_header(file, "xrefs")
         num_xrefs = 0
         xref_num_offset = file.tell()
         file.write(struct.pack('L', 0))
         for obj in bpy.data.objects:
             if obj.name.startswith("xref:"):
                 num_xrefs += 1
-                # write null matrices
+                # write null matrix
                 file.write(struct.pack('fffffffff', 0, 0, 0, 0, 0, 0, 0, 0, 0))
                 # convert location and write it
                 file.write(struct.pack('fff', obj.location[0], obj.location[2], obj.location[1] * -1))
@@ -362,6 +325,7 @@ def export_xrefs(file):
                 
                 file.write(bytes(xref_name, 'utf-8'))
                 file.write(bytes('\x00' * null_length, 'utf-8'))
+                
         file_length = file.tell() - xref_num_offset
         file.seek(xref_num_offset - 4, 0)
         file.write(struct.pack('LL', file_length, num_xrefs))
@@ -371,15 +335,15 @@ def export_xrefs(file):
 
 
 def export_offset(file):
-    write_file_header(file, "offset", 12)
+    bin.write_file_header(file, "offset", 12)
     file.write(struct.pack('fff', 0, 0, 0))
 
 
-def export_shaders(file, replace_words, type="byte"):
+def export_shaders(file, replace_words, materials, type="byte"):
     # First paintjob replace word. If this isn't added we get paintjobs-1 paintjobs :(
     replace_words.insert(0, ['$!*%&INVALIDMATERIAL&%*!$', '$!*%&INVALIDMATERIAL&%*!$'])
     # write file header and record offset
-    write_file_header(file, "shaders")
+    bin.write_file_header(file, "shaders")
     shaders_data_offset = file.tell()
     # prepare shaders header
     shadertype_raw = len(replace_words)
@@ -391,21 +355,21 @@ def export_shaders(file, replace_words, type="byte"):
     # write material sets
     for rwa in replace_words:
         # export a material set
-        for mtl in bpy.data.materials:
+        for mtl in materials:
             #bname = mtl.name
-			
+            
             #if mtl.active_texture is not None:
             #    bname = mtl.active_texture.name  # use texture name instead
-			
-			# handle material name replacement
+            
+            # handle material name replacement
             mtl_name = handle_replace_logic(rwa[0], rwa[1], get_undupe_name(mtl.name))
-			
+            
             if mtl_name.startswith('mm2:notexture') or mtl_name.startswith('age:notexture'):
                 # matte material
-                write_angel_string(file, '')
+                bin.write_angel_string(file, '')
             else:
                 # has texture
-                write_angel_string(file, mtl_name)
+                bin.write_angel_string(file, mtl_name)
 
             # calculate alpha for writing
             mtl_alpha = 1
@@ -413,13 +377,13 @@ def export_shaders(file, replace_words, type="byte"):
                 mtl_alpha = mtl.alpha
 
             if type == "byte":
-                file.write(struct.pack('BBBB', int(mtl.diffuse_color[0] * 255), int(mtl.diffuse_color[1] * 255), int(mtl.diffuse_color[2] * 255), int(mtl_alpha * 255)))
-                file.write(struct.pack('BBBB', int(mtl.diffuse_color[0] * 255), int(mtl.diffuse_color[1] * 255), int(mtl.diffuse_color[2] * 255), int(mtl_alpha * 255)))
-                file.write(struct.pack('BBBB', int(mtl.specular_color[0] * 255), int(mtl.specular_color[1] * 255), int(mtl.specular_color[2] * 255), 255))
+                bin.write_color4d(file, mtl.diffuse_color, mtl_alpha)
+                bin.write_color4d(file, mtl.diffuse_color, mtl_alpha)
+                bin.write_color4d(file, mtl.specular_color)
             elif type == "float":
-                file.write(struct.pack('ffff', mtl.diffuse_color[0], mtl.diffuse_color[1], mtl.diffuse_color[2], mtl_alpha))
-                file.write(struct.pack('ffff', mtl.diffuse_color[0], mtl.diffuse_color[1], mtl.diffuse_color[2], mtl_alpha))
-                file.write(struct.pack('ffff', mtl.specular_color[0], mtl.specular_color[1], mtl.specular_color[2], 1))
+                bin.write_color3f(file, mtl.diffuse_color, mtl_alpha)
+                bin.write_color3f(file, mtl.diffuse_color, mtl_alpha)
+                bin.write_color3f(file, mtl.specular_color)
                 # ????
                 file.write(struct.pack('ffff', 0, 0, 0, 1))
 
@@ -436,7 +400,7 @@ def export_shaders(file, replace_words, type="byte"):
 def export_meshes(file, meshlist, options):
     for obj in meshlist:
         # write FILE header for mesh name
-        write_file_header(file, obj.name)
+        bin.write_file_header(file, obj.name)
         file_data_start_offset = file.tell()
         
         # create temp mesh
@@ -446,15 +410,17 @@ def export_meshes(file, meshlist, options):
         bm = bmesh.new()
         bm.from_mesh(temp_mesh)
         bm_tris = bm.calc_tessface()
+        
         # get mesh infos
+        export_mats = helper.get_used_materials(obj, apply_modifiers_G)
         total_verts = len(bm.verts)
         total_faces = int(len(bm_tris) * 3)
-        num_sections = len(obj.data.materials)
+        num_sections = len(export_mats)
         
         #build FVF
         FVF_FLAGS = FVF(("D3DFVF_XYZ", "D3DFVF_NORMAL", "D3DFVF_TEX1"))
         for mat in obj.data.materials:
-            if mat.use_shadeless:
+            if mat is not None and mat.use_shadeless:
                 # undo the previous flag since we arent
                 # going to write normals
                 FVF_FLAGS.clear_flag("D3DFVF_NORMAL")
@@ -472,8 +438,7 @@ def export_meshes(file, meshlist, options):
         file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
 
         # write sections
-        cmtl_index = 0
-        for mat in obj.data.materials:
+        for mat in export_mats:
             # build the mesh data we need
             uv_layer = bm.loops.layers.uv.active
             vc_layer = bm.loops.layers.color.active
@@ -487,7 +452,7 @@ def export_meshes(file, meshlist, options):
             
             # build tris that are in this material pass
             for lt in bm_tris:
-                if lt[0].face.material_index == cmtl_index:
+                if lt[0].face.material_index == mat:
                   cmtl_tris.append(lt)
             
             # BECAUSE THIS GAME WANTS VERT INDEXES AND NOT FACE INDEXES D:
@@ -536,33 +501,37 @@ def export_meshes(file, meshlist, options):
             # mesh remap done. we will now write our strip
             num_strips = 1
             section_flags = 0
-            shader_offset = get_material_offset(mat)
+            shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[mat].material)]
+            
             # write strip to file
             file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
             strip_primType = 3
             strip_vertices = len(cmtl_verts)
             file.write(struct.pack('LL', strip_primType, strip_vertices))
+            
+            # write vertices
             for cv in range(len(cmtl_verts)):
                 export_vert = cmtl_verts[cv]
-                file.write(struct.pack('fff', export_vert.co[0], export_vert.co[2], export_vert.co[1] * -1))
+                bin.write_float3(file, (export_vert.co[0], export_vert.co[2], export_vert.co[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                    file.write(struct.pack('fff', export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
+                    bin.write_float3(file, (export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                    write_color(file, cmtl_cols[cv])
+                    bin.write_color4d(file, cmtl_cols[cv])
                 if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                    write_color(file, cmtl_cols[cv])
+                    bin.write_color4d(file, cmtl_cols[cv])
                 uv_data = cmtl_uvs[cv]
-                file.write(struct.pack('ff', uv_data[0], (uv_data[1] - 1) * -1))
-                
+                bin.write_float2(file, (uv_data[0], (uv_data[1] - 1) * -1))
+            
+            # write indices
             strip_indices_len = int(len(cmtl_indices) * 3)
             file.write(struct.pack('L', strip_indices_len))
             for ply in cmtl_indices:
                 file.write(struct.pack('HHH', ply[0], ply[1], ply[2]))
-            cmtl_index += 1
         
         # clean up temp_mesh
         bpy.data.meshes.remove(temp_mesh)
-            
+        bm.free()
+		
         # write FILE length
         file_data_length = file.tell() - file_data_start_offset
         file.seek(file_data_start_offset - 4)
@@ -618,16 +587,13 @@ def save_pkg(filepath,
                 break
     print('\tPKG autodetected export type: ' + export_typestr)
     
-    # unlink any unused materials at object level
-    clean_object_materials()
-    # remove any unused materials at scene level
-    # this deletes unlinked materials from the
-    # previous step
-    for material in bpy.data.materials:
-        if not material.users:
-            bpy.data.materials.remove(material)
-
-    # next we need to prepare our mesh list
+    # next we need to prepare our material list
+    export_materials, export_material_remap = helper.prepare_materials(apply_modifiers_G)
+    
+    global material_remap_table
+    material_remap_table = export_material_remap
+    
+    # finally we need to prepare our mesh list
     export_meshlist = []
     for obj in bpy.data.objects:
         if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
@@ -638,7 +604,7 @@ def save_pkg(filepath,
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
     export_meshes(file, reorder_objects(export_meshlist, export_pred), export_options)
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
-    export_shaders(file, get_replace_words(paintjobs), export_shadertype)
+    export_shaders(file, get_replace_words(paintjobs), export_materials, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
     export_xrefs(file)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
