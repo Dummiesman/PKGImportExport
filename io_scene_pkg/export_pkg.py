@@ -349,7 +349,7 @@ def export_shaders(file, replace_words, materials, type="byte"):
     shadertype_raw = len(replace_words)
     if type == "byte":
         shadertype_raw += 128
-    shaders_per_paintjob = len(bpy.data.materials)
+    shaders_per_paintjob = len(materials)
     # write header
     file.write(struct.pack('LL', shadertype_raw, shaders_per_paintjob))
     # write material sets
