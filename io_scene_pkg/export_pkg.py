@@ -440,63 +440,7 @@ def export_meshes(file, meshlist, options):
         # write sections
         for mat in export_mats:
             # build the mesh data we need
-            uv_layer = bm.loops.layers.uv.active
-            vc_layer = bm.loops.layers.color.active
-
-            # initialize lists for conversion
-            cmtl_indices = []
-            cmtl_tris = []
-            cmtl_verts = []
-            cmtl_uvs = []
-            cmtl_cols = []
-            
-            # build tris that are in this material pass
-            for lt in bm_tris:
-                if lt[0].face.material_index == mat:
-                  cmtl_tris.append(lt)
-            
-            # BECAUSE THIS GAME WANTS VERT INDEXES AND NOT FACE INDEXES D:
-            index_remap_table = {}
-            for lt in cmtl_tris:
-                #funstuff :|
-                indices = [-1, -1, -1]
-                for x in range(3):
-                    l = lt[x]
-                    # prepare our hash entry
-                    uv_hash = "NOUV"
-                    col_hash = "NOCOL"
-                    pos_hash = str(l.vert.co)
-                    nrm_hash = str(l.vert.normal)
-                    if uv_layer is not None:
-                        uv_hash = str(l[uv_layer].uv)
-                    if vc_layer is not None:
-                        col_hash = str(l[vc_layer])
-                    index_hash = uv_hash + "|" + col_hash + "|" + pos_hash + "|" + nrm_hash
-
-                    # do we already have a vertex for this?
-                    if index_hash in index_remap_table:
-                        indices[x] = index_remap_table[index_hash]
-                    else:
-                        # get what our next index will be and append to remap table
-                        next_index = len(cmtl_verts)
-                        index_remap_table[index_hash] = next_index
-                        indices[x] = next_index
-
-                        # add neccessary data to remapping tables
-                        cmtl_verts.append(l.vert)
-
-                        if uv_layer is not None:
-                            cmtl_uvs.append(l[uv_layer].uv)
-                        else:
-                            cmtl_uvs.append((0,0))
-
-                        if vc_layer is not None:
-                            cmtl_cols.append(l[vc_layer])
-                        else:
-                            cmtl_cols.append((0,0,0,0))
-
-                # finally append this triangle                
-                cmtl_indices.append(indices)        
+            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, mat, bm_tris)
 
             # mesh remap done. we will now write our strip
             num_strips = 1
