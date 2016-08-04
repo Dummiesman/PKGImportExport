@@ -64,16 +64,16 @@ def write_angel_string(file, strng):
         file.write(struct.pack('B', 0))
 
 def write_float2(file, data):
-    file.write(struct.pack('FF', data[0], data[1]))
+    file.write(struct.pack('ff', data[0], data[1]))
     
 def write_float3(file, data):
-    file.write(struct.pack('FFF', data[0], data[1], data[2]))
+    file.write(struct.pack('fff', data[0], data[1], data[2]))
     
 def write_color4d(file, color, alpha=1):
     file.write(struct.pack('BBBB', int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), int(alpha * 255)))
     
 def write_color4f(file, color, alpha=1):
-    file.write(struct.pack('FFFF', color[0], color[1], color[2], alpha))
+    file.write(struct.pack('ffff', color[0], color[1], color[2], alpha))
 
 
 def write_file_header(file, name, length=0):
