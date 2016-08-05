@@ -100,6 +100,10 @@ def prepare_materials(modifiers):
   
   # prepare mat list
   for ob in bpy.data.objects:
+    # don't export bound materials
+    if ob.name.upper() == "BOUND":
+      continue
+    
     if ob.type == 'MESH' and len(ob.material_slots) > 0:
       # get idx's of used mats (local)
       idx_list = get_used_materials(ob, modifiers)
