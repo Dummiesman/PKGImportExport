@@ -7,15 +7,11 @@
 #
 # ##### END LICENSE BLOCK #####
 
-import os
-import time
-import struct
-
 import bpy, bmesh
-from mathutils import*
+import os, time, struct
+
 import os.path as path
 
-from math import radians
 from io_scene_pkg.fvf import FVF
 
 import io_scene_pkg.binary_helper as bin
