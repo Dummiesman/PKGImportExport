@@ -28,6 +28,7 @@ def check_degenerate(i1, i2, i3):
         return True
     return False
 
+
 ######################################################
 # IMPORT MAIN FILES
 ######################################################
@@ -83,10 +84,12 @@ def read_shaders_file(file, length, offset):
             # look for a texture
             tex_result = helper.try_load_texture(texture_name, pkg_path)
             if tex_result is not False:
-                mtex = mtl.texture_slots.add()
                 cTex = bpy.data.textures.new(texture_name, type='IMAGE')
                 cTex.image = tex_result
+                
+                mtex = mtl.texture_slots.add()
                 mtex.texture = cTex
+                mtex.blend_type = 'MULTIPLY'
             mtl.name = texture_name
 
     # skip to the end of this FILE
