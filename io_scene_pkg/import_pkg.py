@@ -7,18 +7,15 @@
 #
 # ##### END LICENSE BLOCK #####
 
-import os
-import time
-import struct
+import bpy, bmesh, mathutils
+import os, time, struct
 
-import bpy
-import bmesh
-import mathutils
-from mathutils import*
 import os.path as path
-from math import radians
+from mathutils import*
 from io_scene_pkg.fvf import FVF
+
 import io_scene_pkg.binary_helper as bin
+import io_scene_pkg.import_helper as helper
 
 global pkg_path
 pkg_path = None
@@ -26,62 +23,14 @@ pkg_path = None
 ######################################################
 # IMPORT HELPERS
 ######################################################
-def get_raw_object_name(meshname):
-    return meshname.replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
-
-
-def find_matrix(meshname, object):
-    mesh_name_parsed = get_raw_object_name(meshname)
-    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
-    if os.path.isfile(find_path):
-        mtxfile = open(find_path, 'rb')
-        mtx_info = struct.unpack('ffffffffffff', mtxfile.read(48))
-        # 6 7 8 = COG, 9 10 11 = ORIGIN
-        object.location = (mtx_info[9], mtx_info[11] * -1, mtx_info[10])
-    return
-
-
-
 def check_degenerate(i1, i2, i3):
     if i1 == i2 or i1 == i3 or i2 == i3:
         return True
     return False
 
-
-def triangle_strip_to_list(strip, clockwise):
-    triangle_list = []
-    for v in range(2, len(strip)):
-        if clockwise:
-            triangle_list.extend([strip[v-2], strip[v], strip[v-1]])
-        else:
-            triangle_list.extend([strip[v], strip[v-2], strip[v-1]])
-        # make sure we aren't resetting the clockwise
-        # flag if we have a degenerate triangle
-        if not check_degenerate(strip[v], strip[v-1], strip[v-2]):
-            clockwise = not clockwise
-
-    return triangle_list
-
-
 ######################################################
 # IMPORT MAIN FILES
 ######################################################
-def try_load_texture(tex_name):
-    texturepath = path.abspath(path.join(os.path.dirname(pkg_path), "../texture//" + tex_name))
-    find_path = texturepath + ".tga"
-    if os.path.isfile(find_path):
-        # prioritize TGA
-        img = bpy.data.images.load(find_path)
-        # black == alpha? o.O
-        img.use_alpha = False
-        return img
-    find_path = texturepath + ".bmp"
-    if os.path.isfile(find_path):
-        img = bpy.data.images.load(find_path)
-        return img
-    return False
-
-
 def read_shaders_file(file, length, offset):
     shadertype_raw, shaders_per_paintjob = struct.unpack('2L', file.read(8))
     shader_type = "float"
@@ -101,6 +50,7 @@ def read_shaders_file(file, length, offset):
         if texture_name == '':
             # matte material
             texture_name = "age:notexture"
+        
         # initialize these
         diffuse_color = None
         specular_color = None
@@ -118,15 +68,20 @@ def read_shaders_file(file, length, offset):
         # insert this data
         mtl = bpy.data.materials.get(str(num))
         if mtl is not None:
+            # setup colors
             mtl.diffuse_color = (diffuse_color[0], diffuse_color[1], diffuse_color[2])
             mtl.specular_color = (specular_color[0], specular_color[1], specular_color[2])
+            mtl.specular_intensity = 0.1
             mtl.raytrace_mirror.reflect_factor = shininess
-            mtl_alpha_test = (diffuse_color[3] - 1) * -1
-            if mtl_alpha_test > 0:
+            
+            # have alpha?
+            mtl_alpha_test = diffuse_color[3]
+            if mtl_alpha_test < 1:
                 mtl.use_transparency = True
                 mtl.alpha = mtl_alpha_test
+                
             # look for a texture
-            tex_result = try_load_texture(texture_name)
+            tex_result = helper.try_load_texture(texture_name, pkg_path)
             if tex_result is not False:
                 mtex = mtl.texture_slots.add()
                 cTex = bpy.data.textures.new(texture_name, type='IMAGE')
@@ -159,13 +114,15 @@ def read_xrefs(file):
 
 def read_geometry_file(file, meshname):
     scn = bpy.context.scene
-    # ADD THE MESH AND LINK IT TO THE SCENE
+    # add a mesh and link it to the scene
     me = bpy.data.meshes.new(meshname+'Mesh')
     ob = bpy.data.objects.new(meshname, me)
 
     bm = bmesh.new()
     bm.from_mesh(me)
     bm.verts.ensure_lookup_table()
+    
+    # create layers for this object
     uv_layer = bm.loops.layers.uv.new()
     tex_layer = bm.faces.layers.tex.new()
     vc_layer = bm.loops.layers.color.new()
@@ -174,6 +131,7 @@ def read_geometry_file(file, meshname):
     scn.objects.active = ob
 
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+    
     # THERE :) Now read file data
     num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('5L', file.read(20))
 
@@ -184,13 +142,14 @@ def read_geometry_file(file, meshname):
     ob_current_material = -1
     for num in range(num_sections):
         num_strips, strip_flags = struct.unpack('HH', file.read(4))
-        shader_offset = 0
         
         # strip flags
         FLAG_compact_strips = ((strip_flags & (1 << 8)) != 0)
+        
         # fvf flags
         FVF_FLAGS = FVF(fvf)
 
+        shader_offset = 0
         if FLAG_compact_strips:
             shader_offset = struct.unpack('H', file.read(2))[0]
         else:
@@ -198,8 +157,9 @@ def read_geometry_file(file, meshname):
         
         # do we have this material?
         if bpy.data.materials.get(str(shader_offset)) is None:
-            # we must make it
+            # we must make it!
             bpy.data.materials.new(name=str(shader_offset))
+        
         ob.data.materials.append(bpy.data.materials.get(str(shader_offset)))
         ob_current_material += 1
 
@@ -255,7 +215,7 @@ def read_geometry_file(file, meshname):
                     last_strip_indices.append(INDEX)
                     # are we done with this strip?
                     if FLAG_END:
-                        trilist_data.extend(triangle_strip_to_list(last_strip_indices, last_strip_cw))
+                        trilist_data.extend(helper.triangle_strip_to_list(last_strip_indices, last_strip_cw))
                         last_strip_indices = []
                 for i in range(0, len(trilist_data), 3):
                     i1 = trilist_data[i] + current_vert_offset
@@ -311,21 +271,18 @@ def read_geometry_file(file, meshname):
                 num_indices = struct.unpack('L', file.read(4))[0]
                 for i in range(int(num_indices/3)):
                     face_data = struct.unpack('3H', file.read(6))
-                    i1 = face_data[0] + current_vert_offset
-                    i2 = face_data[1] + current_vert_offset
-                    i3 = face_data[2] + current_vert_offset
+                    read_indices = (face_data[0] + current_vert_offset, face_data[1] + current_vert_offset, face_data[2] + current_vert_offset)
                     try:
-                        face = bm.faces.new((bm.verts[i1], bm.verts[i2], bm.verts[i3]))
+                        face = bm.faces.new((bm.verts[read_indices[0]], bm.verts[read_indices[1]], bm.verts[read_indices[2]]))
                         face.smooth = True
                         face.material_index = ob_current_material
                         # set uvs
-                        face.loops[0][uv_layer].uv = uvs[i1]
-                        face.loops[1][uv_layer].uv = uvs[i2]
-                        face.loops[2][uv_layer].uv = uvs[i3]
+                        for uv_set_loop in range(3):
+                          face.loops[uv_set_loop][uv_layer].uv = uvs[read_indices[uv_set_loop]]
+                          
                         # set colors
-                        face.loops[0][vc_layer] = colors[i1]
-                        face.loops[1][vc_layer] = colors[i2]
-                        face.loops[2][vc_layer] = colors[i3]
+                        for color_set_loop in range(3):
+                          face.loops[color_set_loop][vc_layer] = colors[read_indices[color_set_loop]]
                     except Exception as e:
                         print(str(e))
 
@@ -335,7 +292,7 @@ def read_geometry_file(file, meshname):
     bm.to_mesh(me)
     bm.free()
     # lastly, look for a MTX file
-    find_matrix(meshname, ob)
+    helper.find_matrix(meshname, ob, pkg_path)
     return
 
 ######################################################
@@ -363,7 +320,7 @@ def load_pkg(filepath,
         return
 
     # read pkg FILE's
-    pkg_size = os.path.getsize(filepath)
+    pkg_size = path.getsize(filepath)
     while file.tell() != pkg_size:
         file_header = file.read(4).decode("utf-8")
 

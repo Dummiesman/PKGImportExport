@@ -179,30 +179,6 @@ def bounds(obj):
     return o_details(**originals)
 
 
-def write_matrix(meshname, object):
-    mesh_name_parsed = get_raw_object_name(meshname)
-    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
-    # get bounds
-    bnds = bounds(object)
-    mtxfile = open(find_path, 'wb')
-    mtxfile.write(struct.pack('ffffffffffff', bnds.x.min,
-                                              bnds.z.min,
-                                              bnds.y.min * -1,
-                                              bnds.x.max,
-                                              bnds.z.max,
-                                              bnds.y.max * -1,
-                                              # export location twice :/
-                                              # since Blender seems to use that for Location and origin
-                                              object.location.x,
-                                              object.location.z,
-                                              object.location.y * -1,
-                                              object.location.x,
-                                              object.location.z,
-                                              object.location.y * -1))
-    mtxfile.close()
-    return
-
-
 def find_object_ci(name):
     for obj in bpy.data.objects:
         if obj.name.lower() == name.lower():
@@ -432,7 +408,7 @@ def export_meshes(file, meshlist, options):
 
         # do we need a matrix file. Only for H object
         if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
-            write_matrix(obj.name, obj)
+            helper.write_matrix(obj.name, obj, pkg_path)
 
         # write mesh data header
         file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))

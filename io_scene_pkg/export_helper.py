@@ -40,6 +40,31 @@ def get_used_materials(ob, modifiers):
   
   return used_materials
   
+  
+def write_matrix(meshname, object, pkg_path):
+    mesh_name_parsed = get_raw_object_name(meshname)
+    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
+    # get bounds
+    bnds = bounds(object)
+    mtxfile = open(find_path, 'wb')
+    mtxfile.write(struct.pack('ffffffffffff', bnds.x.min,
+                                              bnds.z.min,
+                                              bnds.y.min * -1,
+                                              bnds.x.max,
+                                              bnds.z.max,
+                                              bnds.y.max * -1,
+                                              # export location twice :/
+                                              # since Blender seems to use that for Location and origin
+                                              object.location.x,
+                                              object.location.z,
+                                              object.location.y * -1,
+                                              object.location.x,
+                                              object.location.z,
+                                              object.location.y * -1))
+    mtxfile.close()
+    return
+
+    
 def prepare_materials(modifiers):
   material_list =[]
   material_idx_list = []
