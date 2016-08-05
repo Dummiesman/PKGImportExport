@@ -7,7 +7,12 @@
 #
 # ##### END LICENSE BLOCK #####
 import bpy, bmesh
+import struct
 
+def get_raw_object_name(meshname):
+    return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
+
+    
 def get_material_offset(mtl):
     # :( hack
     coffset = 0
@@ -18,7 +23,6 @@ def get_material_offset(mtl):
     return -1
 
 
-    
 def get_used_materials(ob, modifiers):
   used_materials = []
   
@@ -39,8 +43,32 @@ def get_used_materials(ob, modifiers):
   bm.free()
   
   return used_materials
-  
-  
+ 
+ 
+def bounds(obj):
+
+    local_coords = obj.bound_box[:]
+    om = obj.matrix_world
+    coords = [p[:] for p in local_coords]
+
+    rotated = zip(*coords[::-1])
+
+    push_axis = []
+    for (axis, _list) in zip('xyz', rotated):
+        info = lambda: None
+        info.max = max(_list)
+        info.min = min(_list)
+        info.distance = info.max - info.min
+        push_axis.append(info)
+
+    import collections
+
+    originals = dict(zip(['x', 'y', 'z'], push_axis))
+
+    o_details = collections.namedtuple('object_details', 'x y z')
+    return o_details(**originals)
+
+    
 def write_matrix(meshname, object, pkg_path):
     mesh_name_parsed = get_raw_object_name(meshname)
     find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"

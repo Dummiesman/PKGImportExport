@@ -1,11 +1,11 @@
 Blender PKG Add-On
-Version 0.2.3
-April 23, 2016
+Version EXPERIMENTAL
+Date omitted due to commit rate, see last commit for update date
 
 Created by Dummiesman
 
 1.Requirements
-  The addon was created in Blender 2.76. If you have any issues with the addon in a previous Blender version, I will NOT provide support!!
+  The addon was created in Blender 2.77. If you have any issues with the addon in a previous Blender version, I will NOT provide support!!
 
 2.Installation
   Blender 32 Bit:

@@ -137,11 +137,6 @@ def get_undupe_name(name):
     return name[:nidx] if nidx != -1 else name
 
 
-def get_raw_object_name(meshname):
-    # strip out _H _M _L _VL text
-    return meshname.replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
-
-
 def get_replace_words(rpl_str):
     if len(rpl_str) == 0:
         return []
@@ -153,30 +148,6 @@ def get_replace_words(rpl_str):
             v.append(v[0])
         ret_list[num] = v
     return ret_list
-
-
-def bounds(obj):
-
-    local_coords = obj.bound_box[:]
-    om = obj.matrix_world
-    coords = [p[:] for p in local_coords]
-
-    rotated = zip(*coords[::-1])
-
-    push_axis = []
-    for (axis, _list) in zip('xyz', rotated):
-        info = lambda: None
-        info.max = max(_list)
-        info.min = min(_list)
-        info.distance = info.max - info.min
-        push_axis.append(info)
-
-    import collections
-
-    originals = dict(zip(['x', 'y', 'z'], push_axis))
-
-    o_details = collections.namedtuple('object_details', 'x y z')
-    return o_details(**originals)
 
 
 def find_object_ci(name):
@@ -208,7 +179,7 @@ def autobound():
     # vehicles only
     bodyobj = find_object_ci('BODY_H')
     if bodyobj is not None:
-        bnds = bounds(bodyobj)
+        bnds = helper.bounds(bodyobj)
         veh_rear_max = round(bnds.y.min, 6)
         veh_front_max = round(bnds.y.max, 6)
         # offset the bottom a bit since the front+rear tends to be higher
