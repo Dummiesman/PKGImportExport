@@ -1,6 +1,6 @@
 Blender PKG Add-On
-Version EXPERIMENTAL
-Date omitted due to commit rate, see last commit for update date
+Version 0.3
+August 7th 2016
 
 Created by Dummiesman
 
@@ -24,7 +24,7 @@ Created by Dummiesman
 
 3.Importing
   Textures
-    Textures with the format BMP,TGA will be imported. TEX is NOT supported.
+    Textures with the format BMP,TGA,TEX will be imported. TEX is NOT supported.
 
   MTX Files
     MTX files will automatically be imported if found
@@ -78,17 +78,15 @@ Created by Dummiesman
 
   Q:Why do the imported normals get overwritten when I enter edit mode?
     A:Blender automatically recalculates the normals when entering edit mode. To restore original, or close to original normals for default vehicles, use the remove doubles tool, then apply the Edge Split modifier at an angle above 80 degrees
-
-6.Upcoming/Planned Features
-  -BND/BBND Import-export 
   
-7.Special Thanks
-  RacingFreak : providing a Midnight Club sample file leading to some new discoveries
-  Fireboyd78 : suggestions for code improvement
+6.Special Thanks
+  RacingFreak : Providing a Midnight Club sample file leading to some new discoveries
+  Dummiesboy : Testing (lots of it), ideas and suggestions
+  Fireboyd78 : Suggestions for code improvement
   Diatosta : Testing, ideas and suggestions
-  Dummiesboy : ideas and suggestions
   
-8.Changelog
+  
+7.Changelog
   Version 0.11
     -Fixed MTX file export
     -General code improvements
