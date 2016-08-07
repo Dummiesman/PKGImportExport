@@ -6,9 +6,11 @@
 # Copyright (C) Dummiesman, 2016
 #
 # ##### END LICENSE BLOCK #####
-import bpy
+import bpy, mathutils
 import os, struct
 import os.path as path
+
+import io_scene_pkg.binary_helper as bin
 
 def get_raw_object_name(meshname):
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
@@ -61,3 +63,49 @@ def triangle_strip_to_list(strip, clockwise):
 
     return triangle_list
     
+def convert_triangle_strips(tristrip_data):
+    last_strip_cw = False
+    last_strip_indices = []
+    trilist_data = []
+    for us in tristrip_data:
+        # flags
+        FLAG_CW = ((us & (1 << 14)) != 0)
+        FLAG_END = ((us & (1 << 15)) != 0)
+        INDEX = us
+        if FLAG_CW:
+            INDEX &= ~(1 << 14)
+        if FLAG_END:
+            INDEX &= ~(1 << 15)
+        # cw flag is only set at the first index in the strip
+        if len(last_strip_indices) == 0:
+            last_strip_cw = FLAG_CW
+        last_strip_indices.append(INDEX)
+        # are we done with this strip?
+        if FLAG_END:
+            trilist_data.extend(triangle_strip_to_list(last_strip_indices, last_strip_cw))
+            last_strip_indices = []
+    
+    return trilist_data
+
+def read_vertex_data(file, FVF_FLAGS, compressed):
+    vnorm = mathutils.Vector((1, 1, 1))
+    vuv = (0, 0)
+    vcolor = mathutils.Color((1, 1, 1))
+    if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
+        if compressed:
+          vnorm = bin.read_cfloat3(file)
+        else:
+          vnorm = bin.read_float3(file)
+    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
+        c4d = bin.read_color4d(file)
+        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
+    if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
+        c4d = bin.read_color4d(file)
+        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
+    if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
+        if compressed:
+          vuv = bin.read_cfloat2(file)
+        else:
+          vuv = bin.read_float2(file)
+          
+    return (vnorm, vuv, vcolor)

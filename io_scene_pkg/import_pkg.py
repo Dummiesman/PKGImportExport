@@ -156,7 +156,8 @@ def read_geometry_file(file, meshname):
         
         ob.data.materials.append(bpy.data.materials.get(str(shader_offset)))
         ob_current_material += 1
-
+        
+        # read strip data
         if FLAG_compact_strips:
             ############################
             # READ MIDNIGHT CLUB STRIP #
@@ -167,51 +168,24 @@ def read_geometry_file(file, meshname):
                 num_vertices = struct.unpack('H', file.read(2))[0]
                 for i in range(num_vertices):
                     vpos = bin.read_float3(file)
-                    vnorm = mathutils.Vector((1, 1, 1))
-                    vuv = (0, 0)
-                    vcolor = mathutils.Color((1, 1, 1))
-                    if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                        vnorm = bin.read_cfloat3(file)
-                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                        c4d = bin.read_color4d(file)
-                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
-                    if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                        c4d = bin.read_color4d(file)
-                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
-                    if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
-                        vuv = bin.read_cfloat2(file)
+                    vnorm, vuv, vcolor = helper.read_vertex_data(file, FVF_FLAGS, True)
+
                     # add vertex to mesh
                     vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
                     vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
                     uvs.append((vuv[0], (vuv[1] * -1) + 1))
                     colors.append(vcolor)
+                    
                 # read indices
                 bm.verts.ensure_lookup_table()
                 num_indices = struct.unpack('H', file.read(2))[0]
                 # read our indices into an array
                 tristrip_data = struct.unpack('H' * num_indices, file.read(2 * num_indices))
-                trilist_data = []
+                
                 # convert all our strips
-                last_strip_cw = False
-                last_strip_indices = []
-                for us in tristrip_data:
-                    # flags
-                    FLAG_CW = ((us & (1 << 14)) != 0)
-                    FLAG_END = ((us & (1 << 15)) != 0)
-                    INDEX = us
-                    if FLAG_CW:
-                        INDEX &= ~(1 << 14)
-                    if FLAG_END:
-                        INDEX &= ~(1 << 15)
-                    # cw flag is only set at the first index in the strip
-                    if len(last_strip_indices) == 0:
-                        last_strip_cw = FLAG_CW
-                    last_strip_indices.append(INDEX)
-                    # are we done with this strip?
-                    if FLAG_END:
-                        trilist_data.extend(helper.triangle_strip_to_list(last_strip_indices, last_strip_cw))
-                        last_strip_indices = []
-                        
+                trilist_data = helper.convert_triangle_strips(tristrip_data)
+                
+                #build mesh polygons
                 for i in range(0, len(trilist_data), 3):
                     read_indices = (trilist_data[i] + current_vert_offset, trilist_data[i+1] + current_vert_offset, trilist_data[i+2] + current_vert_offset)
                     try:
@@ -241,19 +215,8 @@ def read_geometry_file(file, meshname):
                 # READ VERTICES HERE
                 for i in range(num_vertices):
                     vpos = bin.read_float3(file)
-                    vnorm = mathutils.Vector((1, 1, 1))
-                    vuv = (0, 0)
-                    vcolor = mathutils.Color((1, 1, 1))
-                    if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                        vnorm = bin.read_float3(file)
-                    if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                        c4d = bin.read_color4d(file)
-                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
-                    if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                        c4d = read_color4d(file)
-                        vcolor = mathutils.Color((c4d[0], c4d[1], c4d[2]))
-                    if FVF_FLAGS.has_flag("D3DFVF_TEX1"):
-                        vuv = bin.read_float2(file)
+                    vnorm, vuv, vcolor = helper.read_vertex_data(file, FVF_FLAGS, False)
+                    
                     # add vertex to mesh
                     vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
                     vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
