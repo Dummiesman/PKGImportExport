@@ -57,9 +57,6 @@ Created by Dummiesman
     To define a paintjob replacement, use this format:_yellow,_red
     To define multiple paintjob replacements, use this format:_yellow,_red|_yellow,_blue
 
-  Auto Bound
-    Auto bound will automatically generate a default-style BOUND for you. This option is only available for vehicles. 
-
   MTX Files
     MTX files will be created if the location of an object is not 0,0,0. Objects do not need the :m suffix. Adding the :m suffix will crash the game, because it will be exported with that name into the PKG file.
 
