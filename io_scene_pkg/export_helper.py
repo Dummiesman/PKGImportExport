@@ -24,29 +24,30 @@ def get_material_offset(mtl):
 
 
 def get_used_materials(ob, modifiers):
-  used_materials = []
-  
-  # create temp mesh
-  temp_mesh = ob.to_mesh(bpy.context.scene, modifiers, 'PREVIEW')
-  
-  # get bmesh
-  bm = bmesh.new()
-  bm.from_mesh(temp_mesh)
-  
-  # look for used materials
-  for f in bm.faces:
-    if not f.material_index in used_materials and f.material_index >= 0 and ob.material_slots[f.material_index].material is not None:
-      used_materials.append(f.material_index)
-  
-  # finish off
-  bpy.data.meshes.remove(temp_mesh)
-  bm.free()
-  
-  return used_materials
+    """search for used materials at object level"""
+    used_materials = []
+    
+    # create temp mesh
+    temp_mesh = ob.to_mesh(bpy.context.scene, modifiers, 'PREVIEW')
+    
+    # get bmesh
+    bm = bmesh.new()
+    bm.from_mesh(temp_mesh)
+    
+    # look for used materials
+    for f in bm.faces:
+      if not f.material_index in used_materials and f.material_index >= 0 and ob.material_slots[f.material_index].material is not None:
+        used_materials.append(f.material_index)
+    
+    # finish off
+    bpy.data.meshes.remove(temp_mesh)
+    bm.free()
+    
+    return used_materials
  
  
 def bounds(obj):
-
+    """get the bounds of an object"""
     local_coords = obj.bound_box[:]
     om = obj.matrix_world
     coords = [p[:] for p in local_coords]
@@ -70,6 +71,7 @@ def bounds(obj):
 
     
 def write_matrix(meshname, object, pkg_path):
+    """write a *.mtx file"""
     mesh_name_parsed = get_raw_object_name(meshname)
     find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
     # get bounds
@@ -94,6 +96,7 @@ def write_matrix(meshname, object, pkg_path):
 
     
 def prepare_materials(modifiers):
+  """find used materials on a global level, and prepare a remap dictionary"""
   material_list =[]
   material_idx_list = []
   material_reorder = {}
@@ -128,6 +131,7 @@ def prepare_materials(modifiers):
       
     
 def prepare_mesh_data(mesh, material_index, tessface):
+  """build mesh data for a PKG file"""
   # initialize lists for conversion
   cmtl_tris = []
   cmtl_indices = []
@@ -144,7 +148,7 @@ def prepare_mesh_data(mesh, material_index, tessface):
       if lt[0].face.material_index == material_index:
         cmtl_tris.append(lt)
 
-  # BECAUSE THIS GAME WANTS VERT INDEXES AND NOT FACE INDEXES D:
+  # convert per face to per vertex indices
   index_remap_table = {}
   for lt in cmtl_tris:
       #funstuff :|

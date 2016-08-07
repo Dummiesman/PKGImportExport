@@ -16,6 +16,7 @@ def get_raw_object_name(meshname):
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
 
 def find_matrix(meshname, object, pkg_path):
+    """search for *.mtx and load if found"""
     mesh_name_parsed = get_raw_object_name(meshname)
     find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
     if path.isfile(find_path):
@@ -26,6 +27,7 @@ def find_matrix(meshname, object, pkg_path):
     return
     
 def try_load_texture(tex_name, pkg_path):
+    """look for tga, bmp, or png texture, and load if found"""
     texturepath = path.abspath(path.join(os.path.dirname(pkg_path), "../texture//" + tex_name))
     find_path = texturepath + ".tga"
     if os.path.isfile(find_path):
@@ -50,6 +52,7 @@ def check_degenerate(i1, i2, i3):
     return False
     
 def triangle_strip_to_list(strip, clockwise):
+    """convert a strip of triangles into a list of triangles"""
     triangle_list = []
     for v in range(2, len(strip)):
         if clockwise:
@@ -64,6 +67,7 @@ def triangle_strip_to_list(strip, clockwise):
     return triangle_list
     
 def convert_triangle_strips(tristrip_data):
+    """convert Midnight Club triangle strips into triangle list data"""
     last_strip_cw = False
     last_strip_indices = []
     trilist_data = []
@@ -88,6 +92,7 @@ def convert_triangle_strips(tristrip_data):
     return trilist_data
 
 def read_vertex_data(file, FVF_FLAGS, compressed):
+    """read PKG vertex data into a tuple"""
     vnorm = mathutils.Vector((1, 1, 1))
     vuv = (0, 0)
     vcolor = mathutils.Color((1, 1, 1))
