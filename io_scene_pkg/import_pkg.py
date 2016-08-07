@@ -21,15 +21,6 @@ global pkg_path
 pkg_path = None
 
 ######################################################
-# IMPORT HELPERS
-######################################################
-def check_degenerate(i1, i2, i3):
-    if i1 == i2 or i1 == i3 or i2 == i3:
-        return True
-    return False
-
-
-######################################################
 # IMPORT MAIN FILES
 ######################################################
 def read_shaders_file(file, length, offset):
@@ -220,22 +211,21 @@ def read_geometry_file(file, meshname):
                     if FLAG_END:
                         trilist_data.extend(helper.triangle_strip_to_list(last_strip_indices, last_strip_cw))
                         last_strip_indices = []
+                        
                 for i in range(0, len(trilist_data), 3):
-                    i1 = trilist_data[i] + current_vert_offset
-                    i2 = trilist_data[i+1] + current_vert_offset
-                    i3 = trilist_data[i+2] + current_vert_offset
+                    read_indices = (trilist_data[i] + current_vert_offset, trilist_data[i+1] + current_vert_offset, trilist_data[i+2] + current_vert_offset)
                     try:
-                        face = bm.faces.new((bm.verts[i1], bm.verts[i2], bm.verts[i3]))
+                        face = bm.faces.new((bm.verts[read_indices[0]], bm.verts[read_indices[1]], bm.verts[read_indices[2]]))
                         face.smooth = True
                         face.material_index = ob_current_material
+                        
                         # set uvs
-                        face.loops[0][uv_layer].uv = uvs[i1]
-                        face.loops[1][uv_layer].uv = uvs[i2]
-                        face.loops[2][uv_layer].uv = uvs[i3]
+                        for uv_set_loop in range(3):
+                          face.loops[uv_set_loop][uv_layer].uv = uvs[read_indices[uv_set_loop]]
+                          
                         # set colors
-                        face.loops[0][vc_layer] = colors[i1]
-                        face.loops[1][vc_layer] = colors[i2]
-                        face.loops[2][vc_layer] = colors[i3]
+                        for color_set_loop in range(3):
+                          face.loops[color_set_loop][vc_layer] = colors[read_indices[color_set_loop]]
                     except Exception as e:
                         print(str(e))
 

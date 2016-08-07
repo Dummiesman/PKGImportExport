@@ -42,6 +42,11 @@ def try_load_texture(tex_name, pkg_path):
         return img
     return False
     
+def check_degenerate(i1, i2, i3):
+    if i1 == i2 or i1 == i3 or i2 == i3:
+        return True
+    return False
+    
 def triangle_strip_to_list(strip, clockwise):
     triangle_list = []
     for v in range(2, len(strip)):
@@ -55,3 +60,4 @@ def triangle_strip_to_list(strip, clockwise):
             clockwise = not clockwise
 
     return triangle_list
+    
