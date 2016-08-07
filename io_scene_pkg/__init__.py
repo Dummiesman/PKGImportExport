@@ -10,7 +10,7 @@
 bl_info = {
     "name": "Angel Studios PKG Format",
     "author": "Dummiesman",
-    "version": (0, 2, 3),
+    "version": (0, 3, 0),
     "blender": (2, 77, 0),
     "location": "File > Import-Export",
     "description": "Import-Export PKG files",
@@ -68,12 +68,6 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
         name="Material Replacement Info",
         description="This is used for extra paintjobs. This list is structured like : _yellow_,_green|_yellow_,_red_  etc.",
         default="",
-        )
-    
-    g_autobound = BoolProperty(
-        name="Auto Bound",
-        description="Generate a MM2 style bound for vehicle exports",
-        default=False,
         )
         
     e_vertexcolors = BoolProperty(

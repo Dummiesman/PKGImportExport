@@ -166,83 +166,6 @@ def handle_replace_logic(rw1, rw2, rpd):
 ######################################################
 # EXPORT MAIN FILES
 ######################################################
-def autobound():
-    # check if our directory exists
-    bounddir = path.abspath(path.join(os.path.dirname(pkg_path), "../bound"))
-    if not os.path.exists(bounddir):
-        os.makedirs(bounddir)
-    boundpath = bounddir + '\\' + (os.path.basename(pkg_path)[:-4]) + '_BOUND.bnd'
-    # vehicles only
-    bodyobj = find_object_ci('BODY_H')
-    if bodyobj is not None:
-        bnds = helper.bounds(bodyobj)
-        veh_rear_max = round(bnds.y.min, 6)
-        veh_front_max = round(bnds.y.max, 6)
-        # offset the bottom a bit since the front+rear tends to be higher
-        veh_bottom = round(bnds.z.min + 0.03, 6)
-        veh_center = round((bnds.y.min + bnds.y.max) / 2, 6)
-        tpf_height = 0.0
-        tpr_height = 0.0
-        tpm_height = 0.0
-        left_coord = round(bnds.x.min, 6)
-        right_coord = round(bnds.x.max, 6)
-        # find 3 height values
-        for v in bodyobj.data.vertices:
-            co = v.co
-            if co[1] > (veh_front_max - 0.2) and co[2] > tpf_height:
-                tpf_height = round(co[2], 6)
-            if co[1] < veh_front_max and co[1] > veh_rear_max and co[2] > tpm_height:
-                tpm_height = round(co[2], 6)
-            if co[1] < (veh_rear_max + 0.2) and co[2] > tpr_height:
-                tpr_height = round(co[2], 6)
-        # write bound file
-        bound_file = ("version: 1.01\n"
-                      "verts: 10\n"
-                      "materials: 1\n"
-                      "edges: 0\n"
-                      "polys: 16\n")
-        # write vertices
-        bound_file += "v " + str(left_coord) + ' ' + str(veh_bottom) + ' ' + str(veh_front_max * -1)
-        bound_file += "\nv " + str(right_coord) + ' ' + str(veh_bottom) + ' ' + str(veh_front_max * -1)
-        bound_file += "\nv " + str(left_coord) + ' ' + str(veh_bottom) + ' ' + str(veh_rear_max * -1)
-        bound_file += "\nv " + str(right_coord) + ' ' + str(veh_bottom) + ' ' + str(veh_rear_max * -1)
-        bound_file += "\nv " + str(left_coord) + ' ' + str(tpf_height) + ' ' + str(veh_front_max * -1)
-        bound_file += "\nv " + str(left_coord) + ' ' + str(tpr_height) + ' ' + str(veh_rear_max * -1)
-        bound_file += "\nv " + str(left_coord) + ' ' + str(tpm_height) + ' ' + str(veh_center * -1)
-        bound_file += "\nv " + str(right_coord) + ' ' + str(tpf_height) + ' ' + str(veh_front_max * -1)
-        bound_file += "\nv " + str(right_coord) + ' ' + str(tpr_height) + ' ' + str(veh_rear_max * -1)
-        bound_file += "\nv " + str(right_coord) + ' ' + str(tpm_height) + ' ' + str(veh_center * -1)
-        # write material
-        bound_file += ("\n\nmtl default {\n"
-                       "\telasticity: 0.1\n"
-                       "\tfriction: 0.5\n"
-                       "\teffect: none\n"
-                       "\tsound: 0\n"
-                       "}\n\n"
-                       "tri\t1   2   0   0\n"
-                       "tri\t3   2   1   0\n"
-                       "tri\t0   2   5   0\n"
-                       "tri\t0   5   4   0\n"
-                       "tri\t4   5   6   0\n"
-                       "tri\t1   0   4   0\n"
-                       "tri\t7   1   4   0\n"
-                       "tri\t7   4   6   0\n"
-                       "tri\t6   9   7   0\n"
-                       "tri\t5   8   6   0\n"
-                       "tri\t8   9   6   0\n"
-                       "tri\t5   2   3   0\n"
-                       "tri\t3   8   5   0\n"
-                       "tri\t1   8   3   0\n"
-                       "tri\t1   7   8   0\n"
-                       "tri\t8   7   9   0")
-
-        with open(boundpath, "w") as text_file:
-            text_file.write(bound_file)
-
-    else:
-        print('Error : Cannot create auto bound because no BODY_H in scene!')
-
-
 def export_xrefs(file):
     has_xrefs = False
     for obj in bpy.data.objects:
@@ -430,7 +353,6 @@ def export_meshes(file, meshlist, options):
 ######################################################
 def save_pkg(filepath,
              paintjobs,
-             g_autobound,
              e_vertexcolors,
              e_vertexcolors_s,
              context):
@@ -496,9 +418,6 @@ def save_pkg(filepath,
     export_xrefs(file)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
     export_offset(file)
-    if g_autobound:
-        print('\t[%.4f] creating bound' % (time.clock() - time1))
-        autobound()
     # PKG WRITE DONE
     print(" done in %.4f sec." % (time.clock() - time1))
     file.close()
@@ -508,7 +427,6 @@ def save(operator,
          context,
          filepath="",
          additional_paintjobs="",
-         g_autobound=False,
          e_vertexcolors=False,
          e_vertexcolors_s=False,
          apply_modifiers=False
@@ -522,7 +440,6 @@ def save(operator,
     # save PKG
     save_pkg(filepath,
              additional_paintjobs,
-             g_autobound,
              e_vertexcolors,
              e_vertexcolors_s,
              context,
