@@ -247,9 +247,9 @@ def export_shaders(file, replace_words, materials, type="byte"):
                 bin.write_color4d(file, mtl.diffuse_color, mtl_alpha)
                 bin.write_color4d(file, mtl.specular_color)
             elif type == "float":
-                bin.write_color3f(file, mtl.diffuse_color, mtl_alpha)
-                bin.write_color3f(file, mtl.diffuse_color, mtl_alpha)
-                bin.write_color3f(file, mtl.specular_color)
+                bin.write_color4f(file, mtl.diffuse_color, mtl_alpha)
+                bin.write_color4f(file, mtl.diffuse_color, mtl_alpha)
+                bin.write_color4f(file, mtl.specular_color)
                 # ????
                 file.write(struct.pack('ffff', 0, 0, 0, 1))
 
