@@ -10,11 +10,11 @@ Created by Dummiesman
 2.Installation
   Blender 32 Bit:
     On 32 bit Blender installations, extract the downloaded ZIP file to
-    C:\Program Files (x86)\Blender Foundation\Blender\2.76\scripts\addon
+    C:\Program Files (x86)\Blender Foundation\Blender\2.77\scripts\addon
 
   Blender 64 Bit:
     On 64 bit Blender installations, extract the downloaded ZIP file to
-    C:\Program Files\Blender Foundation\Blender\2.76\scripts\addons
+    C:\Program Files\Blender Foundation\Blender\2.77\scripts\addons
 
   After you extract the Add-on, it will NOT show up in your import/export list by default!
 
