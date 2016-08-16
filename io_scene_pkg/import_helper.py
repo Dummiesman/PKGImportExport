@@ -114,3 +114,17 @@ def read_vertex_data(file, FVF_FLAGS, compressed):
           vuv = bin.read_float2(file)
           
     return (vnorm, vuv, vcolor)
+    
+    
+def select_matching_normals(bm):
+  bm.verts.index_update()
+  for v in bm.verts:
+    for v2 in bm.verts:
+      if v.index == v2.index:
+        continue
+      
+      if v.normal[0] == v2.normal[0] or v.normal[1] == v2.normal[1] or v.normal[2] == v2.normal[2]:
+        v.select_set(True)
+        v.select_set(True)
+
+        

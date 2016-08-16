@@ -180,13 +180,11 @@ def export_xrefs(file):
         for obj in bpy.data.objects:
             if obj.name.startswith("xref:"):
                 num_xrefs += 1
-                # write null matrix
-                file.write(struct.pack('fffffffff', 0, 0, 0, 0, 0, 0, 0, 0, 0))
-                # convert location and write it
-                file.write(struct.pack('fff', obj.location[0], obj.location[2], obj.location[1] * -1))
+                #write matrix
+                bin.write_matrix3x4(file, obj.matrix_basis)
                
                 # write xref name
-                xref_name = get_undupe_name(obj.name[5:]) + ".max"
+                xref_name = get_undupe_name(obj.name[5:]) + "\x00max"
                 null_length = 32 - len(xref_name)
                 
                 file.write(bytes(xref_name, 'utf-8'))

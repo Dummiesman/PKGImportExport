@@ -20,6 +20,9 @@ import io_scene_pkg.import_helper as helper
 global pkg_path
 pkg_path = None
 
+global auto_merge_normals
+auto_merge_normals = False
+
 ######################################################
 # IMPORT MAIN FILES
 ######################################################
@@ -94,13 +97,21 @@ def read_xrefs(file):
     num_xrefs = struct.unpack('L', file.read(4))[0]
     for num in range(num_xrefs):
         # skip matrix for now :(
-        file.seek(36, 1)
+        mtx = bin.read_matrix3x4(file)
 
-        # get position
-        xref_position = bin.read_float3(file)
-        xref_name = file.read(32).decode("utf-8")
+        # read in xref name, and remove junk Angel Studios didn't null
+        xref_name_bytes = bytearray(file.read(32))
+        for b in range(len(xref_name_bytes)):
+          if xref_name_bytes[b] > 126:
+            xref_name_bytes[b] = 0
+        
+        # setup object
+        xref_name = xref_name_bytes.decode("utf-8")
         ob = bpy.data.objects.new("xref:" + xref_name, None)
-        ob.location = (xref_position[0], xref_position[2] * -1, xref_position[1])
+        
+        # set matrix
+        ob.matrix_basis = mtx
+        
         ob.show_name = True
         ob.show_axis = True
         scn.objects.link(ob)
@@ -244,9 +255,21 @@ def read_geometry_file(file, meshname):
 
                 current_vert_offset += num_vertices
 
+    if auto_merge_normals:
+      # select matching normals
+      helper.select_matching_normals(bm)
+    
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
     bm.to_mesh(me)
     bm.free()
+    
+    if auto_merge_normals:
+      # merge matching normals
+      bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+      bpy.ops.mesh.remove_doubles()
+      bpy.ops.mesh.select_all(action = 'DESELECT')
+      bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    
     # lastly, look for a MTX file
     helper.find_matrix(meshname, ob, pkg_path)
     return
@@ -255,7 +278,8 @@ def read_geometry_file(file, meshname):
 # IMPORT
 ######################################################
 def load_pkg(filepath,
-             context):
+             context,
+             from_self = False):
     # set the PKG path, used for finding textures
     global pkg_path
     pkg_path = filepath
@@ -316,7 +340,13 @@ def load_pkg(filepath,
 def load(operator,
          context,
          filepath="",
+         automerge=False,
          ):
+         
+    
+    # set globals
+    global auto_merge_normals
+    auto_merge_normals = automerge
 
     load_pkg(filepath,
              context,
