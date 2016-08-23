@@ -172,6 +172,7 @@ def export_xrefs(file):
         if obj.name.startswith("xref:"):
             has_xrefs = True
             break
+
     if has_xrefs:
         bin.write_file_header(file, "xrefs")
         num_xrefs = 0
@@ -264,7 +265,7 @@ def export_shaders(file, replace_words, materials, type="byte"):
 def export_meshes(file, meshlist, options):
     for obj in meshlist:
         # write FILE header for mesh name
-        bin.write_file_header(file, obj.name)
+        bin.write_file_header(file, get_undupe_name(obj.name))
         file_data_start_offset = file.tell()
         
         # create temp mesh
@@ -353,6 +354,7 @@ def save_pkg(filepath,
              paintjobs,
              e_vertexcolors,
              e_vertexcolors_s,
+             selection_only,
              context):
     global pkg_path
     pkg_path = filepath
@@ -372,11 +374,18 @@ def save_pkg(filepath,
     if e_vertexcolors_s:
         export_options.append("VC_SPECULAR")
     
+    # what are we exporting?
+    export_objects = None
+    if selection_only:
+      export_objects = bpy.context.selected_objects
+    else:
+      export_objects = bpy.data.objects
+    
     # first we need to figure out the export type before anything
     export_pred = generic_list
     export_typestr = 'generic'
     export_shadertype = 'byte'
-    for obj in bpy.data.objects:
+    for obj in export_objects:
         if (obj.type == 'MESH'):
             # we can check this object :)
             if obj.name.upper().startswith("DASH_"):
@@ -392,6 +401,7 @@ def save_pkg(filepath,
                 export_typestr = 'trailer'
                 export_pred = trailer_list
                 break
+
     print('\tPKG autodetected export type: ' + export_typestr)
     
     # next we need to prepare our material list
@@ -402,7 +412,7 @@ def save_pkg(filepath,
     
     # finally we need to prepare our mesh list
     export_meshlist = []
-    for obj in bpy.data.objects:
+    for obj in export_objects:
         if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
             export_meshlist.append(obj)
 
@@ -427,7 +437,8 @@ def save(operator,
          additional_paintjobs="",
          e_vertexcolors=False,
          e_vertexcolors_s=False,
-         apply_modifiers=False
+         apply_modifiers=False,
+         selection_only=False
          ):
     
     
@@ -441,6 +452,7 @@ def save(operator,
              e_vertexcolors,
              e_vertexcolors_s,
              context,
+             selection_only
              )
 
     return {'FINISHED'}
