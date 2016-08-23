@@ -166,30 +166,31 @@ def handle_replace_logic(rw1, rw2, rpd):
 ######################################################
 # EXPORT MAIN FILES
 ######################################################
-def export_xrefs(file):
-    has_xrefs = False
+def export_xrefs(file, selected_only):
+    # build list of xrefs to export
+    xref_objects = []
     for obj in bpy.data.objects:
         if obj.name.startswith("xref:"):
-            has_xrefs = True
-            break
+            if (selected_only and obj in bpy.context.selected_objects) or not selected_only:
+                xref_objects.append(obj)
 
-    if has_xrefs:
+    # export xrefs
+    if len(xref_objects) > 0:
         bin.write_file_header(file, "xrefs")
         num_xrefs = 0
         xref_num_offset = file.tell()
         file.write(struct.pack('L', 0))
-        for obj in bpy.data.objects:
-            if obj.name.startswith("xref:"):
-                num_xrefs += 1
-                #write matrix
-                bin.write_matrix3x4(file, obj.matrix_basis)
-               
-                # write xref name
-                xref_name = get_undupe_name(obj.name[5:]) + "\x00max"
-                null_length = 32 - len(xref_name)
-                
-                file.write(bytes(xref_name, 'utf-8'))
-                file.write(bytes('\x00' * null_length, 'utf-8'))
+        for obj in xref_objects:
+            num_xrefs += 1
+            #write matrix
+            bin.write_matrix3x4(file, obj.matrix_basis)
+           
+            # write xref name
+            xref_name = get_undupe_name(obj.name[5:]) + "\x00max"
+            null_length = 32 - len(xref_name)
+            
+            file.write(bytes(xref_name, 'utf-8'))
+            file.write(bytes('\x00' * null_length, 'utf-8'))
                 
         file_length = file.tell() - xref_num_offset
         file.seek(xref_num_offset - 4, 0)
@@ -427,7 +428,7 @@ def save_pkg(filepath,
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, get_replace_words(paintjobs), export_materials, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
-    export_xrefs(file)
+    export_xrefs(file, selection_only)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
     export_offset(file)
     # PKG WRITE DONE
