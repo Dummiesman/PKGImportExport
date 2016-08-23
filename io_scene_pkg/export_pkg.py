@@ -303,14 +303,20 @@ def export_meshes(file, meshlist, options):
         file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
 
         # write sections
-        for mat in export_mats:
+        cur_material_index = -1
+        for mat_slot in obj.material_slots:
+            # are we exporting this material?
+            cur_material_index += 1
+            if not cur_material_index in export_mats:
+              continue
+        
             # build the mesh data we need
-            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, mat, bm_tris)
+            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, cur_material_index, bm_tris)
 
             # mesh remap done. we will now write our strip
             num_strips = 1
             section_flags = 0
-            shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[mat].material)]
+            shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[cur_material_index].material)]
             
             # write strip to file
             file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
@@ -347,6 +353,7 @@ def export_meshes(file, meshlist, options):
         file.write(struct.pack('L', file_data_length))
         file.seek(0, 2)
 
+
 ######################################################
 # EXPORT
 ######################################################
@@ -360,9 +367,6 @@ def save_pkg(filepath,
     pkg_path = filepath
 
     print("exporting PKG: %r..." % (filepath))
-
-    if bpy.ops.object.select_all.poll():
-        bpy.ops.object.select_all(action='DESELECT')
 
     time1 = time.clock()
     file = open(filepath, 'wb')
