@@ -166,31 +166,31 @@ def handle_replace_logic(rw1, rw2, rpd):
 ######################################################
 # EXPORT MAIN FILES
 ######################################################
-def export_xrefs(file):
-    has_xrefs = False
+def export_xrefs(file, selected_only):
+    # build list of xrefs to export
+    xref_objects = []
     for obj in bpy.data.objects:
         if obj.name.startswith("xref:"):
-            has_xrefs = True
-            break
-    if has_xrefs:
+            if (selected_only and obj in bpy.context.selected_objects) or not selected_only:
+                xref_objects.append(obj)
+
+    # export xrefs
+    if len(xref_objects) > 0:
         bin.write_file_header(file, "xrefs")
         num_xrefs = 0
         xref_num_offset = file.tell()
         file.write(struct.pack('L', 0))
-        for obj in bpy.data.objects:
-            if obj.name.startswith("xref:"):
-                num_xrefs += 1
-                # write null matrix
-                file.write(struct.pack('fffffffff', 0, 0, 0, 0, 0, 0, 0, 0, 0))
-                # convert location and write it
-                file.write(struct.pack('fff', obj.location[0], obj.location[2], obj.location[1] * -1))
-               
-                # write xref name
-                xref_name = get_undupe_name(obj.name[5:]) + ".max"
-                null_length = 32 - len(xref_name)
-                
-                file.write(bytes(xref_name, 'utf-8'))
-                file.write(bytes('\x00' * null_length, 'utf-8'))
+        for obj in xref_objects:
+            num_xrefs += 1
+            #write matrix
+            bin.write_matrix3x4(file, obj.matrix_basis)
+           
+            # write xref name
+            xref_name = get_undupe_name(obj.name[5:]) + "\x00max"
+            null_length = 32 - len(xref_name)
+            
+            file.write(bytes(xref_name, 'utf-8'))
+            file.write(bytes('\x00' * null_length, 'utf-8'))
                 
         file_length = file.tell() - xref_num_offset
         file.seek(xref_num_offset - 4, 0)
@@ -266,7 +266,7 @@ def export_shaders(file, replace_words, materials, type="byte"):
 def export_meshes(file, meshlist, options):
     for obj in meshlist:
         # write FILE header for mesh name
-        bin.write_file_header(file, obj.name)
+        bin.write_file_header(file, get_undupe_name(obj.name))
         file_data_start_offset = file.tell()
         
         # create temp mesh
@@ -304,14 +304,20 @@ def export_meshes(file, meshlist, options):
         file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
 
         # write sections
-        for mat in export_mats:
+        cur_material_index = -1
+        for mat_slot in obj.material_slots:
+            # are we exporting this material?
+            cur_material_index += 1
+            if not cur_material_index in export_mats:
+              continue
+        
             # build the mesh data we need
-            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, mat, bm_tris)
+            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, cur_material_index, bm_tris)
 
             # mesh remap done. we will now write our strip
             num_strips = 1
             section_flags = 0
-            shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[mat].material)]
+            shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[cur_material_index].material)]
             
             # write strip to file
             file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
@@ -348,6 +354,7 @@ def export_meshes(file, meshlist, options):
         file.write(struct.pack('L', file_data_length))
         file.seek(0, 2)
 
+
 ######################################################
 # EXPORT
 ######################################################
@@ -355,14 +362,12 @@ def save_pkg(filepath,
              paintjobs,
              e_vertexcolors,
              e_vertexcolors_s,
+             selection_only,
              context):
     global pkg_path
     pkg_path = filepath
 
     print("exporting PKG: %r..." % (filepath))
-
-    if bpy.ops.object.select_all.poll():
-        bpy.ops.object.select_all(action='DESELECT')
 
     time1 = time.clock()
     file = open(filepath, 'wb')
@@ -374,12 +379,23 @@ def save_pkg(filepath,
     if e_vertexcolors_s:
         export_options.append("VC_SPECULAR")
     
+    # what are we exporting?
+    export_objects = None
+    if selection_only:
+      export_objects = bpy.context.selected_objects
+    else:
+      export_objects = bpy.data.objects
+    
+    print("EXPORT OBJECTS")
+    for x in export_objects:
+      print(x.name)
+      
     # first we need to figure out the export type before anything
     export_pred = generic_list
     export_typestr = 'generic'
     export_shadertype = 'byte'
-    for obj in bpy.data.objects:
-        if (obj.type == 'MESH'):
+    for obj in export_objects:
+        if obj.type == 'MESH':
             # we can check this object :)
             if obj.name.upper().startswith("DASH_"):
                 export_shadertype = 'float'
@@ -394,6 +410,7 @@ def save_pkg(filepath,
                 export_typestr = 'trailer'
                 export_pred = trailer_list
                 break
+
     print('\tPKG autodetected export type: ' + export_typestr)
     
     # next we need to prepare our material list
@@ -404,7 +421,7 @@ def save_pkg(filepath,
     
     # finally we need to prepare our mesh list
     export_meshlist = []
-    for obj in bpy.data.objects:
+    for obj in export_objects:
         if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
             export_meshlist.append(obj)
 
@@ -415,7 +432,7 @@ def save_pkg(filepath,
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, get_replace_words(paintjobs), export_materials, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
-    export_xrefs(file)
+    export_xrefs(file, selection_only)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
     export_offset(file)
     # PKG WRITE DONE
@@ -429,7 +446,8 @@ def save(operator,
          additional_paintjobs="",
          e_vertexcolors=False,
          e_vertexcolors_s=False,
-         apply_modifiers=False
+         apply_modifiers=False,
+         selection_only=False
          ):
     
     
@@ -442,6 +460,7 @@ def save(operator,
              additional_paintjobs,
              e_vertexcolors,
              e_vertexcolors_s,
+             selection_only,
              context,
              )
 

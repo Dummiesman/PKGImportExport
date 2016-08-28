@@ -88,6 +88,12 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
         default=True,
         )
         
+    selection_only = BoolProperty(
+        name="Selection Only",
+        description="Export only selected elements",
+        default=False,
+        )
+        
     def execute(self, context):
         from . import export_pkg
         
