@@ -456,8 +456,8 @@ def save(operator,
              additional_paintjobs,
              e_vertexcolors,
              e_vertexcolors_s,
+             selection_only,
              context,
-             selection_only
              )
 
     return {'FINISHED'}
