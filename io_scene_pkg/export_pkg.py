@@ -328,7 +328,8 @@ def export_meshes(file, meshlist, options):
             # write vertices
             for cv in range(len(cmtl_verts)):
                 export_vert = cmtl_verts[cv]
-                bin.write_float3(file, (export_vert.co[0], export_vert.co[2], export_vert.co[1] * -1))
+                export_vert_location = (obj.matrix_world * export_vert.co) - obj.location
+                bin.write_float3(file, (export_vert_location[0], export_vert_location[2], export_vert_location[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                     bin.write_float3(file, (export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
@@ -386,12 +387,13 @@ def save_pkg(filepath,
     else:
       export_objects = bpy.data.objects
     
+      
     # first we need to figure out the export type before anything
     export_pred = generic_list
     export_typestr = 'generic'
     export_shadertype = 'byte'
     for obj in export_objects:
-        if (obj.type == 'MESH'):
+        if obj.type == 'MESH':
             # we can check this object :)
             if obj.name.upper().startswith("DASH_"):
                 export_shadertype = 'float'
