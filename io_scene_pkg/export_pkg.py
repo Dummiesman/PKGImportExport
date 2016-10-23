@@ -48,8 +48,6 @@ vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
                 "WHL1_H", "WHL1_M", "WHL1_L", "WHL1_VL",
                 "WHL2_H", "WHL2_M", "WHL2_L", "WHL2_VL",
                 "WHL3_H", "WHL3_M", "WHL3_L", "WHL3_VL",
-                "WHL4_H", "WHL4_M", "WHL4_L", "WHL4_VL",
-                "WHL5_H", "WHL5_M", "WHL5_L", "WHL5_VL",
                 "BREAK0_H", "BREAK0_M", "BREAK0_L", "BREAK0_VL",
                 "BREAK1_H", "BREAK1_M", "BREAK1_L", "BREAK1_VL",
                 "BREAK2_H", "BREAK2_M", "BREAK2_L", "BREAK2_VL",
@@ -64,9 +62,11 @@ vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
                 "SRN2_H", "SRN2_M", "SRN2_L", "SRN2_VL",
                 "SRN3_H", "SRN3_M", "SRN3_L", "SRN3_VL",
                 "HEADLIGHT0_H", "HEADLIGHT0_M", "HEADLIGHT0_L", "HEADLIGHT0_VL",
-                "HEADLIGHT1_H", "HEADLIGHT1_M", "HEADLIGHT1_L", "HEADLIGHT1_VL"
+                "HEADLIGHT1_H", "HEADLIGHT1_M", "HEADLIGHT1_L", "HEADLIGHT1_VL",
                 "FNDR0_H", "FNDR0_M", "FNDR0_L", "FNDR0_VL",
-                "FNDR1_H", "FNDR1_M", "FNDR1_L", "FNDR1_VL"]
+                "FNDR1_H", "FNDR1_M", "FNDR1_L", "FNDR1_VL",
+                "WHL4_H", "WHL4_M", "WHL4_L", "WHL4_VL",
+                "WHL5_H", "WHL5_M", "WHL5_L", "WHL5_VL"]
 
 # Vehicle Dashboards
 dash_list = ["DAMAGE_NEEDLE_H", "DAMAGE_NEEDLE_M", "DAMAGE_NEEDLE_L", "DAMAGE_NEEDLE_VL",
