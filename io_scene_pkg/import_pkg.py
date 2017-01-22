@@ -17,11 +17,7 @@ from io_scene_pkg.fvf import FVF
 import io_scene_pkg.binary_helper as bin
 import io_scene_pkg.import_helper as helper
 
-global pkg_path
 pkg_path = None
-
-global auto_merge_normals
-auto_merge_normals = False
 
 ######################################################
 # IMPORT MAIN FILES
@@ -51,7 +47,7 @@ def read_shaders_file(file, length, offset):
         specular_color = None
         if shader_type == "float":
             diffuse_color = bin.read_color4f(file)
-            file.seek(16,1) # seek past"" diffuse""
+            file.seek(16,1) # seek past ""diffuse""
             specular_color = bin.read_color4f(file)
             file.seek(16,1) # seek past unused reflective color
         elif shader_type == "byte":
@@ -137,14 +133,15 @@ def read_geometry_file(file, meshname):
 
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     
-    # THERE :) Now read file data
+    # read geometry FILE data
     num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('5L', file.read(20))
 
     # mesh data holders
     current_vert_offset = 0
-    uvs = []
-    colors = []
+    custom_normals = []
     ob_current_material = -1
+    
+    # read sections
     for num in range(num_sections):
         num_strips, strip_flags = struct.unpack('HH', file.read(4))
         
@@ -170,106 +167,21 @@ def read_geometry_file(file, meshname):
         
         # read strip data
         if FLAG_compact_strips:
-            ############################
-            # READ MIDNIGHT CLUB STRIP #
-            ############################
-            for num2 in range(num_strips):
-                # primtype
-                file.seek(2, 1)
-                num_vertices = struct.unpack('H', file.read(2))[0]
-                for i in range(num_vertices):
-                    vpos = bin.read_float3(file)
-                    vnorm, vuv, vcolor = helper.read_vertex_data(file, FVF_FLAGS, True)
-
-                    # add vertex to mesh
-                    vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
-                    vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
-                    uvs.append((vuv[0], (vuv[1] * -1) + 1))
-                    colors.append(vcolor)
-                    
-                # read indices
-                bm.verts.ensure_lookup_table()
-                num_indices = struct.unpack('H', file.read(2))[0]
-                # read our indices into an array
-                tristrip_data = struct.unpack('H' * num_indices, file.read(2 * num_indices))
-                
-                # convert all our strips
-                trilist_data = helper.convert_triangle_strips(tristrip_data)
-                
-                #build mesh polygons
-                for i in range(0, len(trilist_data), 3):
-                    read_indices = (trilist_data[i] + current_vert_offset, trilist_data[i+1] + current_vert_offset, trilist_data[i+2] + current_vert_offset)
-                    try:
-                        face = bm.faces.new((bm.verts[read_indices[0]], bm.verts[read_indices[1]], bm.verts[read_indices[2]]))
-                        face.smooth = True
-                        face.material_index = ob_current_material
-                        
-                        # set uvs
-                        for uv_set_loop in range(3):
-                          face.loops[uv_set_loop][uv_layer].uv = uvs[read_indices[uv_set_loop]]
-                          
-                        # set colors
-                        for color_set_loop in range(3):
-                          face.loops[color_set_loop][vc_layer] = colors[read_indices[color_set_loop]]
-                    except Exception as e:
-                        print(str(e))
-
-                current_vert_offset += num_vertices
+            current_vert_offset, section_normals = helper.read_compact_section(file, bm, FVF_FLAGS, num_strips, current_vert_offset, ob_current_material, uv_layer, vc_layer)
         else:
-            ##############################
-            # READ MIDTOWN MADNESS STRIP #
-            ##############################
-            for num2 in range(num_strips):
-                # primtype
-                file.seek(4, 1)
-                num_vertices = struct.unpack('L', file.read(4))[0]
-                # READ VERTICES HERE
-                for i in range(num_vertices):
-                    vpos = bin.read_float3(file)
-                    vnorm, vuv, vcolor = helper.read_vertex_data(file, FVF_FLAGS, False)
-                    
-                    # add vertex to mesh
-                    vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
-                    vtx.normal = mathutils.Vector((vnorm[0], vnorm[2] * -1, vnorm[1]))
-                    uvs.append((vuv[0], (vuv[1] * -1) + 1))
-                    colors.append(vcolor)
-                # read indices
-                bm.verts.ensure_lookup_table()
-                num_indices = struct.unpack('L', file.read(4))[0]
-                for i in range(int(num_indices/3)):
-                    face_data = struct.unpack('3H', file.read(6))
-                    read_indices = (face_data[0] + current_vert_offset, face_data[1] + current_vert_offset, face_data[2] + current_vert_offset)
-                    try:
-                        face = bm.faces.new((bm.verts[read_indices[0]], bm.verts[read_indices[1]], bm.verts[read_indices[2]]))
-                        face.smooth = True
-                        face.material_index = ob_current_material
-                        # set uvs
-                        for uv_set_loop in range(3):
-                          face.loops[uv_set_loop][uv_layer].uv = uvs[read_indices[uv_set_loop]]
-                          
-                        # set colors
-                        for color_set_loop in range(3):
-                          face.loops[color_set_loop][vc_layer] = colors[read_indices[color_set_loop]]
-                    except Exception as e:
-                        print(str(e))
+            current_vert_offset, section_normals = helper.read_full_section(file, bm, FVF_FLAGS, num_strips, current_vert_offset, ob_current_material, uv_layer, vc_layer)
+        custom_normals += section_normals
 
-                current_vert_offset += num_vertices
-
-    if auto_merge_normals:
-      # select matching normals
-      helper.select_matching_normals(bm)
-    
+    # apply bmesh data to object
     bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
     bm.to_mesh(me)
     bm.free()
     
-    if auto_merge_normals:
-      # merge matching normals
-      bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-      bpy.ops.mesh.remove_doubles()
-      bpy.ops.mesh.select_all(action = 'DESELECT')
-      bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-    
+    # set custom normals (if applicable)
+    if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
+      me.normals_split_custom_set(custom_normals)
+      me.use_auto_smooth = True
+   
     # lastly, look for a MTX file
     helper.find_matrix(meshname, ob, pkg_path)
     return
@@ -294,10 +206,13 @@ def load_pkg(filepath,
 
     # start reading our pkg file
     PKGTYPE = file.read(4).decode("utf-8")
-    if PKGTYPE != "PKG3":
+    PKGVER =0
+    if PKGTYPE != "PKG3" and PKGTYPE != "PKG2":
         print('\tFatal Error:  PKG file is wrong format : ' + PKGTYPE)
         file.close()
         return
+        
+    PKGVER = 3 if PKGTYPE == "PKG3" else 2
 
     # read pkg FILE's
     pkg_size = path.getsize(filepath)
@@ -312,11 +227,14 @@ def load_pkg(filepath,
 
         # found a proper FILE header
         file_name = bin.read_angel_string(file)
-        file_length = struct.unpack('L', file.read(4))[0]
+        
+        file_length = 0
+        if PKGVER == 3:
+          file_length = struct.unpack('L', file.read(4))[0]
         
         # Angel released a very small batch of corrupt PKG files
         # this is here just in case someone tries to import one
-        if file_length == 0:
+        if file_length == 0 and PKGVER == 3:
             raise Exception("Invalid PKG3 file : cannot have file length of 0")
             
         print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
@@ -325,7 +243,10 @@ def load_pkg(filepath,
             read_shaders_file(file, file_length, file.tell())
         elif file_name == "offset":
             # skip over this LEL
-            file.seek(file_length, 1)
+            if PKGVER == 3:
+              file.seek(file_length, 1)
+            else:
+              file.seek(12, 1)
         elif file_name == "xrefs":
             read_xrefs(file)
         else:
@@ -340,14 +261,8 @@ def load_pkg(filepath,
 def load(operator,
          context,
          filepath="",
-         automerge=False,
          ):
          
-    
-    # set globals
-    global auto_merge_normals
-    auto_merge_normals = automerge
-
     load_pkg(filepath,
              context,
              )
