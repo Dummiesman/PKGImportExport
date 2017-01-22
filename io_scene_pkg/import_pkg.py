@@ -181,7 +181,9 @@ def read_geometry_file(file, meshname):
     if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
       me.normals_split_custom_set(custom_normals)
       me.use_auto_smooth = True
-   
+    else:
+      me.calc_normals()
+      
     # lastly, look for a MTX file
     helper.find_matrix(meshname, ob, pkg_path)
     return
