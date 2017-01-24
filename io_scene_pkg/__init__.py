@@ -42,12 +42,6 @@ class ImportPKG(bpy.types.Operator, ImportHelper):
     filename_ext = ".pkg"
     filter_glob = StringProperty(default="*.pkg", options={'HIDDEN'})
 
-    automerge = BoolProperty(
-      name="Merge Matching Normals",
-      description="Merge vertices that have the same normals",
-      default=False,
-    )
-    
     def execute(self, context):
         from . import import_pkg
         keywords = self.as_keywords(ignore=("axis_forward",
@@ -96,7 +90,7 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
         
     selection_only = BoolProperty(
         name="Selection Only",
-        description="Export only the selected objects?",
+        description="Export only selected elements",
         default=False,
         )
         
