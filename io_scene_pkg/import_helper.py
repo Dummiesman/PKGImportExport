@@ -17,13 +17,16 @@ import io_scene_pkg.binary_helper as bin
 ##################################
 def read_compact_section(file, bm, fvf, num_strips, vertex_offset, material_index, uv_layer, vc_layer):
     """Reads geometry data from a compact PKG section"""
-    normals_cache = []
     loop_normals = []
-    uv_list = []
-    color_list = []
     
     # read strips
     for strip in range(num_strips):
+      # strip-scope lists
+      normals_cache = []
+      uv_list = []
+      color_list = []
+      
+      # read actual data
       file.seek(2, 1) # seek past primtype
       num_vertices = struct.unpack('H', file.read(2))[0]
       for i in range(num_vertices):
@@ -32,7 +35,7 @@ def read_compact_section(file, bm, fvf, num_strips, vertex_offset, material_inde
 
           # add vertex to mesh
           vtx = bm.verts.new((vpos[0], vpos[2] * -1, vpos[1]))
-          normals_cache.append((vnorm[0], vnorm[2] * -1, vnorm[1]))
+          normals_cache.append((round(vnorm[0], 1), round(vnorm[2] * -1, 1), round(vnorm[1], 1)))
           uv_list.append((vuv[0], (vuv[1] * -1) + 1))
           color_list.append(vcolor)
           
