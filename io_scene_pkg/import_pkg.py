@@ -127,10 +127,10 @@ def read_geometry_file(file, meshname):
     uv_layer = bm.loops.layers.uv.new()
     tex_layer = bm.faces.layers.tex.new()
     vc_layer = bm.loops.layers.color.new()
-
+    
+    # link to scene
     scn.objects.link(ob)
     scn.objects.active = ob
-
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     
     # read geometry FILE data
@@ -184,8 +184,11 @@ def read_geometry_file(file, meshname):
     else:
       me.calc_normals()
       
-    # lastly, look for a MTX file
-    helper.find_matrix(meshname, ob, pkg_path)
+    # lastly, look for a MTX file. Don't grab an MTX for FNDR_M/L/VL though
+    # as the FNDR lods are static and don't use the mtx
+    if not ("fndr" in meshname.lower() and not "_h" in meshname.lower()):
+      helper.find_matrix(meshname, ob, pkg_path)
+      
     return
 
 ######################################################
@@ -207,14 +210,13 @@ def load_pkg(filepath,
     file = open(filepath, 'rb')
 
     # start reading our pkg file
-    PKGTYPE = file.read(4).decode("utf-8")
-    PKGVER =0
-    if PKGTYPE != "PKG3" and PKGTYPE != "PKG2":
-        print('\tFatal Error:  PKG file is wrong format : ' + PKGTYPE)
+    pkg_version = file.read(4).decode("utf-8")
+    if pkg_version != "PKG3" and pkg_version != "PKG2":
+        print('\tFatal Error:  PKG file is wrong format : ' + pkg_version)
         file.close()
         return
         
-    PKGVER = 3 if PKGTYPE == "PKG3" else 2
+    pkg_version_id = int(pkg_version[-1:])
 
     # read pkg FILE's
     pkg_size = path.getsize(filepath)
@@ -229,14 +231,11 @@ def load_pkg(filepath,
 
         # found a proper FILE header
         file_name = bin.read_angel_string(file)
-        
-        file_length = 0
-        if PKGVER == 3:
-          file_length = struct.unpack('L', file.read(4))[0]
+        file_length = 0 if pkg_version_id == 2 else struct.unpack('L', file.read(4))[0]
         
         # Angel released a very small batch of corrupt PKG files
         # this is here just in case someone tries to import one
-        if file_length == 0 and PKGVER == 3:
+        if file_length == 0 and pkg_version_id == 3:
             raise Exception("Invalid PKG3 file : cannot have file length of 0")
             
         print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
@@ -244,9 +243,9 @@ def load_pkg(filepath,
             # load shaders file
             read_shaders_file(file, file_length, file.tell())
         elif file_name == "offset":
-            # skip over this LEL
-            if PKGVER == 3:
-              file.seek(file_length, 1)
+            # skip over this, seems it's meta
+            if pkg_version_id == 3:
+               file.seek(file_length, 1)
             else:
               file.seek(12, 1)
         elif file_name == "xrefs":

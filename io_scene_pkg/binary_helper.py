@@ -85,8 +85,6 @@ def read_matrix3x4(file):
     # create 4x4 and return
     mtx4x4 = mtx.to_4x4()
     mtx4x4.translation = ((translation[0], translation[2] * -1, translation[1]))
-    
-
     return mtx4x4
 
 def write_matrix3x4(file, matrix):
@@ -114,8 +112,6 @@ def write_matrix3x4(file, matrix):
     file.write(struct.pack('fff', mtx[0][1], mtx[1][1], mtx[2][1]))
     file.write(struct.pack('fff', mtx[0][2], mtx[1][2], mtx[2][2]))
     file.write(struct.pack('fff', translation[0], translation[2], translation[1] * -1))
-    
-    
 
 #########
 # WRITE #
