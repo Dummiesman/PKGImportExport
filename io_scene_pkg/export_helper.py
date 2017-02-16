@@ -36,7 +36,7 @@ def get_used_materials(ob, modifiers):
     
     # look for used materials
     for f in bm.faces:
-      if not f.material_index in used_materials and f.material_index >= 0 and ob.material_slots[f.material_index].material is not None:
+      if not f.material_index in used_materials and f.material_index >= 0 and f.material_index < len(ob.material_slots) and ob.material_slots[f.material_index].material is not None:
         used_materials.append(f.material_index)
     
     # finish off

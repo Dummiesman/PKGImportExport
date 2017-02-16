@@ -7,7 +7,7 @@
 #
 # ##### END LICENSE BLOCK #####
 
-import bpy, struct
+import bpy, struct, mathutils
 
 ########
 # READ #
@@ -51,6 +51,68 @@ def read_color4d(file):
     c4d = struct.unpack('BBBB', file.read(4))
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
     
+def read_matrix3x4(file):
+    row1r = list(struct.unpack('fff', file.read(12)))
+    row2r = list(struct.unpack('fff', file.read(12)))
+    row3r = list(struct.unpack('fff', file.read(12)))
+    translation = struct.unpack('fff', file.read(12))
+    
+    # rotate the matrix
+    row1 = [row1r[0], row2r[0], row3r[0]]
+    row2 = [row1r[1], row2r[1], row3r[1]]
+    row3 = [row1r[2], row2r[2], row3r[2]]
+    
+    # create matrix, and rotate axes
+    mtx = mathutils.Matrix((row1, row2, row3))
+    
+    
+    eul_angles = mtx.to_euler('XYZ')
+    new_rot = [eul_angles.x, eul_angles.z, eul_angles.y]
+    
+    # zero out rotation
+    eul_angles.x *= -1
+    eul_angles.y *= -1
+    eul_angles.z *= -1
+    mtx.rotate(eul_angles)
+    
+    
+    # insert correct rotation
+    eul_angles.x = new_rot[0]
+    eul_angles.y = new_rot[1]
+    eul_angles.z = new_rot[2]
+    mtx.rotate(eul_angles)
+    
+    # create 4x4 and return
+    mtx4x4 = mtx.to_4x4()
+    mtx4x4.translation = ((translation[0], translation[2] * -1, translation[1]))
+    return mtx4x4
+
+def write_matrix3x4(file, matrix):
+    # convert to 3x3 and grab pos/rot
+    mtx = matrix.to_3x3()
+    
+    eul_angles = mtx.to_euler('XYZ')
+    translation = matrix.to_translation()
+    new_rot = [eul_angles.x, eul_angles.z, eul_angles.y]
+    
+    # zero out rotation
+    eul_angles.x *= -1
+    eul_angles.y *= -1
+    eul_angles.z *= -1
+    mtx.rotate(eul_angles)
+    
+    # insert correct rotation
+    eul_angles.x = new_rot[0]
+    eul_angles.y = new_rot[1]
+    eul_angles.z = new_rot[2]
+    mtx.rotate(eul_angles)
+    
+    #write 3x3
+    file.write(struct.pack('fff', mtx[0][0], mtx[1][0], mtx[2][0]))
+    file.write(struct.pack('fff', mtx[0][1], mtx[1][1], mtx[2][1]))
+    file.write(struct.pack('fff', mtx[0][2], mtx[1][2], mtx[2][2]))
+    file.write(struct.pack('fff', translation[0], translation[2], translation[1] * -1))
+
 #########
 # WRITE #
 #########

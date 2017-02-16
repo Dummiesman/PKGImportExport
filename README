@@ -73,9 +73,6 @@ Created by Dummiesman
   Q:I imported my PKG file, I have my textures in the right format, but I don't see them in Blender!?
     A:You have to be in Material render mode, rather than Solid. You also must have lighting in the scene to see materials.
 
-  Q:Why do the imported normals get overwritten when I enter edit mode?
-    A:Blender automatically recalculates the normals when entering edit mode. To restore original, or close to original normals for default vehicles, use the remove doubles tool, then apply the Edge Split modifier at an angle above 80 degrees
-  
 6.Special Thanks
   RacingFreak : Providing a Midnight Club sample file leading to some new discoveries
   Dummiesboy : Testing (lots of it), ideas and suggestions
