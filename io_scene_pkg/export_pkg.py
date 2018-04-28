@@ -75,7 +75,7 @@ dash_list = ["DAMAGE_NEEDLE_H", "DAMAGE_NEEDLE_M", "DAMAGE_NEEDLE_L", "DAMAGE_NE
              "ROOF_H", "ROOF_M", "ROOF_L", "ROOF_VL",
              "SPEED_NEEDLE_H", "SPEED_NEEDLE_M", "SPEED_NEEDLE_L", "SPEED_NEEDLE_VL",
              "TACH_NEEDLE_H", "TACH_NEEDLE_M", "TACH_NEEDLE_L", "TACH_NEEDLE_VL",
-             "WHEEL_H", "WHEEL_M", "WHEEL_L", "WHEEL_VL"]
+             "WHEEL_H", "WHEEL_M", "WHEEL_L", "WHEEL_VL", "DASH_EXTRA_H", "DASH_EXTRA_M", "DASH_EXTRA_L", "DASH_EXTRA_VL"]
 
 # Vehicle trailers
 trailer_list = ["TRAILER_H", "TRAILER_M", "TRAILER_L", "TRAILER_VL",
@@ -119,13 +119,16 @@ dne_list = ["BOUND", "BINARY_BOUND",
 ######################################################
 def reorder_objects(lst, pred):
     return_list = [None] * len(pred)
+    append_list = []
     for v in lst:
         try:
-            return_list[pred.index(v.name)] = v
+            #print("FOUND " + v.name)
+            return_list[pred.index(v.name.upper())] = v
         except:
             # not found in predicate list
-            return_list.append(v)
-    return [x for x in return_list if x is not None]
+            #print(v.name + " NOT FOUND, ADDING TO END")
+            append_list.append(v)
+    return [x for x in return_list if x is not None] + append_list
 
 
 def get_undupe_name(name):
@@ -232,6 +235,9 @@ def export_shaders(file, replace_words, materials, type="byte"):
             
             if mtl_name.startswith('mm2:notexture') or mtl_name.startswith('age:notexture'):
                 # matte material
+                print("Material " + mtl_name + " is a matte material")
+                for val in range(3):
+                  print("diffuse color [" + str(val) + "]=" + str(mtl.diffuse_color[val]))
                 bin.write_angel_string(file, '')
             else:
                 # has texture
@@ -423,12 +429,19 @@ def save_pkg(filepath,
         if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
             export_meshlist.append(obj)
 
+    # special case for dashboards, if no variants are specified, it crashes
+    # so we'll make defaults here
+    variants = paintjobs
+    if export_typestr == 'dash':
+      if not "|" in paintjobs or not "," in paintjobs or not paintjobs.strip():
+        variants = '"R",N|"R",one|"R",two|"R",three|"R",four|"R",five|"R",six'
+    
     # WRITE PKG FILE
     file.write(bytes('PKG3', 'utf-8'))
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
     export_meshes(file, reorder_objects(export_meshlist, export_pred), export_options)
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
-    export_shaders(file, get_replace_words(paintjobs), export_materials, export_shadertype)
+    export_shaders(file, get_replace_words(variants), export_materials, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
     export_xrefs(file, selection_only)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
