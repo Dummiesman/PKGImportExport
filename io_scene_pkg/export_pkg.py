@@ -85,7 +85,8 @@ trailer_list = ["TRAILER_H", "TRAILER_M", "TRAILER_L", "TRAILER_VL",
                 "TWHL1_H", "TWHL1_M", "TWHL1_L", "TWHL1_VL",
                 "TWHL2_H", "TWHL2_M", "TWHL2_L", "TWHL2_VL",
                 "TWHL3_H", "TWHL3_M", "TWHL3_L", "TWHL3_VL",
-                "TRAILER_HITCH_H", "TRAILER_HITCH_M", "TRAILER_HITCH_L", "TRAILER_HITCH_VL"]
+                "TRAILER_HITCH_H", "TRAILER_HITCH_M", "TRAILER_HITCH_L", "TRAILER_HITCH_VL",
+                "RLIGHT_H", "RLIGHT_M", "RLIGHT_L", "RLIGHT_VL"]
 
 # Props, buildings, etc
 generic_list = ["H", "M", "L", "VL",
