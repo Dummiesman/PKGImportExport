@@ -143,18 +143,35 @@ def read_full_section(file, bm, fvf, num_strips, vertex_offset, material_index, 
 
 def get_raw_object_name(meshname):
     """Strips off all suffixes for LOD"""
-    return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
+    name = meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
+    if name == "H" or name == "M" or name == "L" or name == "VL":
+      return "MAIN"
+    return name
 
-def find_matrix(meshname, object, pkg_path):
-    """search for *.mtx and load if found"""
+def get_lod_name(meshname):
+    meshname_lower = meshname.lower()
+    if "_h" in meshname_lower or meshname_lower == "h":
+      return "H"
+    if "_m" in meshname_lower or meshname_lower == "m":
+      return "M"
+    if "_l" in meshname_lower or meshname_lower == "l":
+      return "L"
+    if "_vl" in meshname_lower or meshname_lower == "vl":
+      return "VL"
+    return None
+    
+def find_matrix(meshname, pkg_path):
+    """search for *.mtx and load if found. returns loc,pivot"""
     mesh_name_parsed = get_raw_object_name(meshname)
     find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
     if path.isfile(find_path):
         mtxfile = open(find_path, 'rb')
         mtx_info = struct.unpack('ffffffffffff', mtxfile.read(48))
-        # 6 7 8 = COG, 9 10 11 = ORIGIN
-        object.location = (mtx_info[9], mtx_info[11] * -1, mtx_info[10])
-    return
+        mtx_min = (mtx_info[0], mtx_info[2] * -1, mtx_info[1])
+        mtx_max = (mtx_info[3], mtx_info[5] * -1, mtx_info[4])
+        return ((mtx_info[9], mtx_info[11] * -1, mtx_info[10]), (mtx_info[6], mtx_info[8] * -1, mtx_info[7]), mtx_min, mtx_max, True)
+        
+    return ((0,0,0), (0,0,0), (0,0,0), (0,0,0), False)
     
 def try_load_texture(tex_name, pkg_path):
     """look for tga, bmp, or png texture, and load if found"""

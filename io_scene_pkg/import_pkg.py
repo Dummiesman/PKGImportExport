@@ -18,6 +18,7 @@ import io_scene_pkg.binary_helper as bin
 import io_scene_pkg.import_helper as helper
 
 pkg_path = None
+object_parents = {}
 
 ######################################################
 # IMPORT MAIN FILES
@@ -44,18 +45,21 @@ def read_shaders_file(file, length, offset):
         
         # initialize these
         diffuse_color = None
-        specular_color = None
+        specular_color = [0.0, 0.0, 0.0]
+        emissive_color = None
         if shader_type == "float":
             diffuse_color = bin.read_color4f(file)
-            file.seek(16,1) # seek past ""diffuse""
+            file.seek(16,1) # seek past ambient
             specular_color = bin.read_color4f(file)
-            file.seek(16,1) # seek past unused reflective color
+            emissive_color = bin.read_color4f(file)
         elif shader_type == "byte":
             diffuse_color = bin.read_color4d(file)
-            file.seek(4,1) # seek past ""diffuse""            
-            specular_color = bin.read_color4d(file)
+            file.seek(4,1) # seek past "ambient"            
+            emissive_color = bin.read_color4d(file)
+        
         shininess = bin.read_float(file)
-
+        emissive = max(emissive_color)
+        
         # insert this data
         mtl = bpy.data.materials.get(str(num))
         if mtl is not None:
@@ -64,6 +68,7 @@ def read_shaders_file(file, length, offset):
             mtl.specular_color = (specular_color[0], specular_color[1], specular_color[2])
             mtl.specular_intensity = 0.1
             mtl.raytrace_mirror.reflect_factor = shininess
+            mtl.emit = emissive
             
             # have alpha?
             mtl_alpha_test = diffuse_color[3]
@@ -115,9 +120,54 @@ def read_xrefs(file):
 
 def read_geometry_file(file, meshname):
     scn = bpy.context.scene
+    
+    # decide parents and such
+    parentname = helper.get_raw_object_name(meshname)
+    lodname = helper.get_lod_name(meshname)
+    parentname_upper = parentname.upper()
+    
+    # create parent if it doesn't exist
+    if not parentname_upper in object_parents and lodname is not None:
+      parent_ob = bpy.data.objects.new(parentname, None)
+      parent_ob.empty_draw_size = 0.01
+      
+      scn.objects.link(parent_ob)
+      object_parents[parentname_upper] = parent_ob
+      
+      # load location/pivot
+      parent_loc, pivot, mtx_min, mtx_max, has_mtx = helper.find_matrix(meshname, pkg_path)
+      if has_mtx:
+        parent_ob.location = parent_loc
+      
+        pivot_ob = bpy.data.objects.new("Pivot", None)
+        scn.objects.link(pivot_ob)
+        pivot_ob.parent = parent_ob
+        pivot_ob.location = pivot
+        pivot_ob.empty_draw_size = 0.5
+        
+        # bounding box
+        bounding_ob = bpy.data.objects.new("Bbox", None)
+        scn.objects.link(bounding_ob)
+        bounding_ob.parent = parent_ob
+        
+        sx = (mtx_max[0] - mtx_min[0]) / 2
+        sy = (mtx_max[1] - mtx_min[1]) / 2
+        sz = (mtx_max[2] - mtx_min[2]) / 2
+        cx = (mtx_max[0] + mtx_min[0]) / 2
+        cy = (mtx_max[1] + mtx_min[1]) / 2
+        cz = (mtx_max[2] + mtx_min[2]) / 2
+        
+        bounding_ob.location = (cx, cy, cz)
+        bounding_ob.scale = (sx, sy, sz)
+        bounding_ob.empty_draw_type = 'CUBE'
+    
     # add a mesh and link it to the scene
     me = bpy.data.meshes.new(meshname+'Mesh')
-    ob = bpy.data.objects.new(meshname, me)
+    ob = bpy.data.objects.new(meshname if lodname is None else lodname, me)
+    
+    # set parent if this is a lod model
+    if lodname is not None:
+      ob.parent = object_parents[parentname_upper]
 
     bm = bmesh.new()
     bm.from_mesh(me)
@@ -135,7 +185,8 @@ def read_geometry_file(file, meshname):
     
     # read geometry FILE data
     num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('5L', file.read(20))
-
+    FVF_FLAGS = FVF(fvf)
+    
     # mesh data holders
     current_vert_offset = 0
     custom_normals = []
@@ -148,9 +199,6 @@ def read_geometry_file(file, meshname):
         # strip flags
         FLAG_compact_strips = ((strip_flags & (1 << 8)) != 0)
         
-        # fvf flags
-        FVF_FLAGS = FVF(fvf)
-
         shader_offset = 0
         if FLAG_compact_strips:
             shader_offset = struct.unpack('H', file.read(2))[0]
@@ -165,7 +213,7 @@ def read_geometry_file(file, meshname):
         ob.data.materials.append(bpy.data.materials.get(str(shader_offset)))
         ob_current_material += 1
         
-        # read strip data
+        # read strip data (ew, maybe improve)
         if FLAG_compact_strips:
             current_vert_offset, section_normals = helper.read_compact_section(file, bm, FVF_FLAGS, num_strips, current_vert_offset, ob_current_material, uv_layer, vc_layer)
         else:
@@ -184,11 +232,6 @@ def read_geometry_file(file, meshname):
     else:
       me.calc_normals()
       
-    # lastly, look for a MTX file. Don't grab an MTX for FNDR_M/L/VL though
-    # as the FNDR lods are static and don't use the mtx
-    if not ("fndr" in meshname.lower() and not "_h" in meshname.lower()):
-      helper.find_matrix(meshname, ob, pkg_path)
-      
     return
 
 ######################################################
@@ -200,6 +243,8 @@ def load_pkg(filepath,
     # set the PKG path, used for finding textures
     global pkg_path
     pkg_path = filepath
+    global object_parents
+    object_parents = {}
 
     print("importing PKG: %r..." % (filepath))
 
