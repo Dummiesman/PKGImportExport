@@ -70,12 +70,48 @@ def bounds(obj):
     return o_details(**originals)
 
     
-def write_matrix(meshname, object, pkg_path):
+def write_matrix(meshname, object, pivot_object, pkg_path):
     """write a *.mtx file"""
     mesh_name_parsed = get_raw_object_name(meshname)
     find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
+    
+    # get pivot
+    pivot = [0, 0, 0]
+    if pivot_object is not None:
+      pivot = pivot_object.location
+        
     # get bounds
-    bnds = bounds(object)
+    bnds_object = None
+    for child in object.children:
+      if child.type == 'EMPTY' and "bbox" in child.name.lower():
+        bnds_object = child
+        break
+      if child.type == 'MESH':
+        bnds_object = child
+    
+    # calc bounds    
+    if bnds_object is not None:
+      if bnds_object.type == 'EMPTY':
+        # special
+        ctr = bnds_object.location
+        scl = bnds_object.scale
+        
+        bnds = lambda: None
+        bnds.x = lambda: None
+        bnds.y = lambda: None
+        bnds.z = lambda: None
+        bnds.x.min = ctr.x - (scl.x)
+        bnds.y.min = ctr.y - (scl.y)
+        bnds.z.min = ctr.z - (scl.z)
+        bnds.x.max = ctr.x + (scl.x)
+        bnds.y.max = ctr.y + (scl.y)
+        bnds.z.max = ctr.z + (scl.z)
+      else:
+        bnds = bounds(bnds_object)
+    else:
+      bnds = bounds(object)
+    
+    # debug
     mtxfile = open(find_path, 'wb')
     mtxfile.write(struct.pack('ffffffffffff', bnds.x.min,
                                               bnds.z.min,
@@ -85,9 +121,9 @@ def write_matrix(meshname, object, pkg_path):
                                               bnds.y.max * -1,
                                               # export location twice :/
                                               # since Blender seems to use that for Location and origin
-                                              object.location.x,
-                                              object.location.z,
-                                              object.location.y * -1,
+                                              pivot[0],
+                                              pivot[2],
+                                              pivot[1] * -1,
                                               object.location.x,
                                               object.location.z,
                                               object.location.y * -1))
