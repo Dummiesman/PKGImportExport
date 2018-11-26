@@ -49,7 +49,7 @@ def get_used_materials(ob, modifiers):
 def bounds(obj):
     """get the bounds of an object"""
     local_coords = obj.bound_box[:]
-    om = obj.matrix_world
+    om = obj.matrix_local
     coords = [p[:] for p in local_coords]
 
     rotated = zip(*coords[::-1])
