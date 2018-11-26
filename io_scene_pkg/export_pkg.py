@@ -34,48 +34,19 @@ material_remap_table = {}
 ######################################################
 
 # AI/Player Vehicle
-vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
-                "SHADOW_H", "SHADOW_M", "SHADOW_L", "SHADOW_VL",
-                "HLIGHT_H", "HLIGHT_M", "HLIGHT_L", "HLIGHT_VL",
-                "TLIGHT_H", "TLIGHT_M", "TLIGHT_L", "TLIGHT_VL",
-                "SLIGHT0_H", "SLIGHT0_M", "SLIGHT0_L", "SLIGHT0_VL",
-                "SLIGHT1_H", "SLIGHT1_M", "SLIGHT1_L", "SLIGHT1_VL",
-                "RLIGHT_H", "RLIGHT_M", "RLIGHT_L", "RLIGHT_VL",
-                "BLIGHT_H", "BLIGHT_M", "BLIGHT_L", "BLIGHT_VL",
-                "SIREN0_H", "SIREN0_M", "SIREN0_L", "SIREN0_VL",
-                "SIREN1_H", "SIREN1_M", "SIREN1_L", "SIREN1_VL",
-                "WHL0_H", "WHL0_M", "WHL0_L", "WHL0_VL",
-                "WHL1_H", "WHL1_M", "WHL1_L", "WHL1_VL",
-                "WHL2_H", "WHL2_M", "WHL2_L", "WHL2_VL",
-                "WHL3_H", "WHL3_M", "WHL3_L", "WHL3_VL",
-                "BREAK0_H", "BREAK0_M", "BREAK0_L", "BREAK0_VL",
-                "BREAK1_H", "BREAK1_M", "BREAK1_L", "BREAK1_VL",
-                "BREAK2_H", "BREAK2_M", "BREAK2_L", "BREAK2_VL",
-                "BREAK3_H", "BREAK3_M", "BREAK3_L", "BREAK3_VL",
-                "BREAK01_H", "BREAK01_M", "BREAK01_L", "BREAK01_VL",
-                "BREAK12_H", "BREAK12_M", "BREAK12_L", "BREAK12_VL",
-                "BREAK23_H", "BREAK23_M", "BREAK23_L", "BREAK23_VL",
-                "BREAK03_H", "BREAK03_M", "BREAK03_L", "BREAK03_VL",
-                "TRAILER_HITCH_H", "TRAILER_HITCH_M", "TRAILER_HITCH_L", "TRAILER_HITCH_VL",
-                "SRN0_H", "SRN0_M", "SRN0_L", "SRN0_VL",
-                "SRN1_H", "SRN1_M", "SRN1_L", "SRN1_VL",
-                "SRN2_H", "SRN2_M", "SRN2_L", "SRN2_VL",
-                "SRN3_H", "SRN3_M", "SRN3_L", "SRN3_VL",
-                "HEADLIGHT0_H", "HEADLIGHT0_M", "HEADLIGHT0_L", "HEADLIGHT0_VL",
-                "HEADLIGHT1_H", "HEADLIGHT1_M", "HEADLIGHT1_L", "HEADLIGHT1_VL",
-                "FNDR0_H", "FNDR0_M", "FNDR0_L", "FNDR0_VL",
-                "FNDR1_H", "FNDR1_M", "FNDR1_L", "FNDR1_VL",
-                "WHL4_H", "WHL4_M", "WHL4_L", "WHL4_VL",
-                "WHL5_H", "WHL5_M", "WHL5_L", "WHL5_VL"]
+vehicle_list = ["BODY", "SHADOW", "HLIGHT", "TLIGHT", "SLIGHT0", "SLIGHT1",
+                "RLIGHT", "BLIGHT", "BODYDAMAGE", "SIREN0", "SIREN1", "DECAL",
+                "DRIVER", "SHOCK0", "SHOCK1", "SHOCK2", "SHOCK3",
+                "ARM0", "ARM1", "ARM2", "ARM3", "SHAFT2", "SHAFT3",
+                "AXLE0", "AXLE1", "ENGINE", "WHL0", "WHL1", "WHL2", "WHL3",
+                "BREAK0", "BREAK1", "BREAK2", "BREAK3", "BREAK01", "BREAK12",
+                "BREAK23", "BREAK03", "HUB0", "HUB1", "HUB2", "HUB3", "TRAILER_HITCH",
+                "SRN0", "SRN1", "SRN2", "SRN3", "HEADLIGHT0", "HEADLIGHT1",
+                "FNDR0", "FNDR1", "WHL4", "WHL5"]
 
 # Vehicle Dashboards
-dash_list = ["DAMAGE_NEEDLE_H", "DAMAGE_NEEDLE_M", "DAMAGE_NEEDLE_L", "DAMAGE_NEEDLE_VL",
-             "DASH_H", "DASH_M", "DASH_L", "DASH_VL",
-             "GEAR_INDICATOR_H", "GEAR_INDICATOR_M", "GEAR_INDICATOR_L", "GEAR_INDICATOR_VL",
-             "ROOF_H", "ROOF_M", "ROOF_L", "ROOF_VL",
-             "SPEED_NEEDLE_H", "SPEED_NEEDLE_M", "SPEED_NEEDLE_L", "SPEED_NEEDLE_VL",
-             "TACH_NEEDLE_H", "TACH_NEEDLE_M", "TACH_NEEDLE_L", "TACH_NEEDLE_VL",
-             "WHEEL_H", "WHEEL_M", "WHEEL_L", "WHEEL_VL", "DASH_EXTRA_H", "DASH_EXTRA_M", "DASH_EXTRA_L", "DASH_EXTRA_VL"]
+dash_list = ["DAMAGE_NEEDLE", "DASH", "GEAR_INDICATOR", "ROOF", "SPEED_NEEDLE",
+             "TACH_NEEDLE", "WHEEL", "DASH_EXTRA"]
 
 # Vehicle trailers
 trailer_list = ["TRAILER_H", "TRAILER_M", "TRAILER_L", "TRAILER_VL",
@@ -86,35 +57,19 @@ trailer_list = ["TRAILER_H", "TRAILER_M", "TRAILER_L", "TRAILER_VL",
                 "TWHL2_H", "TWHL2_M", "TWHL2_L", "TWHL2_VL",
                 "TWHL3_H", "TWHL3_M", "TWHL3_L", "TWHL3_VL",
                 "TRAILER_HITCH_H", "TRAILER_HITCH_M", "TRAILER_HITCH_L", "TRAILER_HITCH_VL",
-                "RLIGHT_H", "RLIGHT_M", "RLIGHT_L", "RLIGHT_VL",
-                "BLIGHT_H", "BLIGHT_M", "BLIGHT_L", "BLIGHT_VL"]
+                "RLIGHT_H", "RLIGHT_M", "RLIGHT_L", "RLIGHT_VL"]
 
 # Props, buildings, etc
-generic_list = ["H", "M", "L", "VL",
-                "BREAK01_H", "BREAK01_M", "BREAK01_L", "BREAK01_VL",
-                "BREAK02_H", "BREAK02_M", "BREAK02_L", "BREAK02_VL",
-                "BREAK03_H", "BREAK03_M", "BREAK03_L", "BREAK03_VL",
-                "BREAK04_H", "BREAK04_M", "BREAK04_L", "BREAK04_VL",
-                "BREAK05_H", "BREAK05_M", "BREAK05_L", "BREAK05_VL",
-                "BREAK06_H", "BREAK06_M", "BREAK06_L", "BREAK06_VL",
-                "BREAK07_H", "BREAK07_M", "BREAK07_L", "BREAK07_VL",
-                "BREAK08_H", "BREAK08_M", "BREAK08_L", "BREAK08_VL",
-                "BREAK09_H", "BREAK09_M", "BREAK09_L", "BREAK09_VL",
-                "REDGLOWDAY_H", "REDGLOWDAY_M", "REDGLOWDAY_L", "REDGLOWDAY_VL",
-                "YELLOWGLOWDAY_H", "YELLOWGLOWDAY_M", "YELLOWGLOWDAY_L", "YELLOWGLOWDAY_VL",
-                "GREENGLOWDAY_H", "GREENGLOWDAY_M", "GREENGLOWDAY_L", "GREENGLOWDAY_VL",
-                "WALK_DAY_H", "WALK_DAY_M", "WALK_DAY_L", "WALK_DAY_VL",
-                "NOWALK_DAY_H", "NOWALK_DAY_M", "NOWALK_DAY_L", "NOWALK_DAY_VL",
-                "REDGLOWNIGHT_H", "REDGLOWNIGHT_M", "REDGLOWNIGHT_L", "REDGLOWNIGHT_VL",
-                "YELLOWGLOWNIGHT_H", "YELLOWGLOWNIGHT_M", "YELLOWGLOWNIGHT_L", "YELLOWGLOWNIGHT_VL",
-                "GREENGLOWNIGHT_H", "GREENGLOWNIGHT_M", "GREENGLOWNIGHT_L", "GREENGLOWNIGHT_VL",
-                "WALK_NIGHT_H", "WALK_NIGHT_M", "WALK_NIGHT_L", "WALK_NIGHT_VL",
-                "NOWALK_NIGHT_H", "NOWALK_NIGHT_M", "NOWALK_NIGHT_L", "NOWALK_NIGHT_VL"]
+generic_list = ["MAIN", "SHADOW", "MASK", "NONRANDOM", "REFL", "OPAQUE", "BREAK01", "BREAK02", "BREAK03", "BREAK04",
+                "BREAK05", "BREAK06", "BREAK07", "BREAK08", "BREAK09",
+                "REDGLOWDAY", "YELLOWGLOWDAY", "GREENGLOWDAY", "WALK_DAY", 
+                "NOWALK_DAY", "REDGLOWNIGHT", "YELLOWGLOWNIGHT", "GREENGLOWNIGHT",
+                "WALK_NIGHT", "NOWALK_NIGHT"]
+
 
 # do not export' list
 dne_list = ["BOUND", "BINARY_BOUND",
-            "EXHAUST0_H", "EXHAUST0_M", "EXHAUST0_L", "EXHAUST0_VL",
-            "EXHAUST1_H", "EXHAUST1_M", "EXHAUST1_L", "EXHAUST1_VL"]
+            "EXHAUST0", "EXHAUST1"]
 
 ######################################################
 # EXPORT HELPERS
@@ -247,19 +202,21 @@ def export_shaders(file, replace_words, materials, type="byte"):
 
             # calculate alpha for writing
             mtl_alpha = 1
+            mtl_emit = mtl.emit / 2.0
+            mtl_emit_color = [mtl.diffuse_color[0] * mtl_emit, mtl.diffuse_color[1] * mtl_emit, mtl.diffuse_color[2] * mtl_emit]
             if mtl.use_transparency:
                 mtl_alpha = mtl.alpha
 
+              
             if type == "byte":
-                bin.write_color4d(file, mtl.diffuse_color, mtl_alpha)
-                bin.write_color4d(file, mtl.diffuse_color, mtl_alpha)
-                bin.write_color4d(file, mtl.specular_color)
+                bin.write_color4d(file, mtl.diffuse_color, mtl_alpha) # diffuse
+                bin.write_color4d(file, mtl.diffuse_color, mtl_alpha) # ambient 
+                bin.write_color4d(file, mtl_emit_color) # emissive
             elif type == "float":
-                bin.write_color4f(file, mtl.diffuse_color, mtl_alpha)
-                bin.write_color4f(file, mtl.diffuse_color, mtl_alpha)
-                bin.write_color4f(file, mtl.specular_color)
-                # ????
-                file.write(struct.pack('ffff', 0, 0, 0, 1))
+                bin.write_color4f(file, mtl.diffuse_color, mtl_alpha) # diffuse
+                bin.write_color4f(file, mtl.diffuse_color, mtl_alpha) # ambient
+                bin.write_color4f(file, mtl.specular_color) # specular
+                bin.write_color4f(file, mtl_emit_color) # emissive
 
             # shininess
             file.write(struct.pack('f', mtl.raytrace_mirror.reflect_factor))
@@ -271,97 +228,142 @@ def export_shaders(file, replace_words, materials, type="byte"):
     file.seek(0, 2)
 
 
+def export_mesh(file, name, obj, options):
+      # write FILE header for mesh name
+      bin.write_file_header(file, get_undupe_name(name))
+      file_data_start_offset = file.tell()
+      
+      # create temp mesh
+      temp_mesh = obj.to_mesh(bpy.context.scene, apply_modifiers_G, 'PREVIEW')
+      
+      # get bmesh
+      bm = bmesh.new()
+      bm.from_mesh(temp_mesh)
+      bm_tris = bm.calc_tessface()
+      
+      # get mesh infos
+      export_mats = helper.get_used_materials(obj, apply_modifiers_G)
+      total_verts = 0
+      total_indices = 0
+      num_sections = len(export_mats)
+      
+      # prepare mesh data for export
+      prepared_mesh_data = []
+      for mat_slot in obj.material_slots:
+        material_index = len(prepared_mesh_data)
+        if not material_index in export_mats:
+          prepared_mesh_data.append([])
+          continue
+          
+        cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, material_index, bm_tris)
+        total_verts += len(cmtl_verts)
+        total_indices += len(cmtl_indices) * 3
+        prepared_mesh_data.append([cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols])
+        
+        
+      #build FVF
+      FVF_FLAGS = FVF(("D3DFVF_XYZ", "D3DFVF_NORMAL", "D3DFVF_TEX1"))
+      for mat in obj.data.materials:
+          if mat is not None and mat.use_shadeless:
+              # undo the previous flag since we arent
+              # going to write normals
+              FVF_FLAGS.clear_flag("D3DFVF_NORMAL")
+              break
+      if "VC_DIFFUSE" in options:
+          FVF_FLAGS.set_flag("D3DFVF_DIFFUSE")
+      if "VC_SPECULAR" in options:
+          FVF_FLAGS.set_flag("D3DFVF_SPECULAR")
+
+      # write mesh data header
+      file.write(struct.pack('LLLLL', num_sections, total_verts, total_indices, num_sections, FVF_FLAGS.value))
+
+      # write sections
+      cur_material_index = -1
+      for mat_slot in obj.material_slots:
+          # are we exporting this material?
+          cur_material_index += 1
+          if not cur_material_index in export_mats:
+            continue
+      
+          # build the mesh data we need
+          cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = prepared_mesh_data[cur_material_index]
+
+          # mesh remap done. we will now write our strip
+          num_strips = 1
+          section_flags = 0
+          shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[cur_material_index].material)]
+          
+          # write strip to file
+          file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
+          strip_primType = 3
+          strip_vertices = len(cmtl_verts)
+          file.write(struct.pack('LL', strip_primType, strip_vertices))
+          
+          # write vertices
+          for cv in range(len(cmtl_verts)):
+              export_vert = cmtl_verts[cv]
+              export_vert_location = (obj.matrix_local * export_vert.co)
+              bin.write_float3(file, (export_vert_location[0], export_vert_location[2], export_vert_location[1] * -1))
+              if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
+                  bin.write_float3(file, (export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
+              if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
+                  bin.write_color4d(file, cmtl_cols[cv])
+              if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
+                  bin.write_color4d(file, cmtl_cols[cv])
+              uv_data = cmtl_uvs[cv]
+              bin.write_float2(file, (uv_data[0], (uv_data[1] - 1) * -1))
+          
+          # write indices
+          strip_indices_len = int(len(cmtl_indices) * 3)
+          file.write(struct.pack('L', strip_indices_len))
+          for ply in cmtl_indices:
+              file.write(struct.pack('HHH', ply[0], ply[1], ply[2]))
+      
+      # clean up temp_mesh
+      bpy.data.meshes.remove(temp_mesh)
+      bm.free()
+  
+      # write FILE length
+      file_data_length = file.tell() - file_data_start_offset
+      file.seek(file_data_start_offset - 4)
+      file.write(struct.pack('L', file_data_length))
+      file.seek(0, 2)
+
 def export_meshes(file, meshlist, options):
     for obj in meshlist:
-        # write FILE header for mesh name
-        bin.write_file_header(file, get_undupe_name(obj.name))
-        file_data_start_offset = file.tell()
+      lods = [None, None, None, None]
+      pivot = None
+      
+      print("obj " + obj.name + " childcount " + str(len(obj.children)))
+      # get lods
+      for child in obj.children:
+        lodname = get_undupe_name(child.name).lower()
+        print("Searching obj " + obj.name + " child " + child.name + " undupe " + lodname)
+        if lodname == "h":
+          lods[0] = child
+        if lodname== "m":
+          lods[1] = child
+        if lodname == "l":
+          lods[2] = child
+        if lodname == "vl":
+          lods[3] = child
+        if lodname == "pivot":
+          pivot = child
+          
+      # export meshes
+      if lods[0] is not None:
+        export_mesh(file, "H" if obj.name.lower() == "main" else obj.name + "_H", lods[0], options)
+      if lods[1] is not None:
+        export_mesh(file, "M" if obj.name.lower() == "main" else obj.name + "_M", lods[1], options)
+      if lods[2] is not None:
+        export_mesh(file, "L" if obj.name.lower() == "main" else obj.name + "_L", lods[2], options)
+      if lods[3] is not None:
+        export_mesh(file, "VL" if obj.name.lower() == "main" else obj.name + "_VL", lods[3], options)
         
-        # create temp mesh
-        temp_mesh = obj.to_mesh(bpy.context.scene, apply_modifiers_G, 'PREVIEW')
+      # write pivot
+      if (obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0):
+          helper.write_matrix(obj.name, obj, pivot, pkg_path)
         
-        # get bmesh
-        bm = bmesh.new()
-        bm.from_mesh(temp_mesh)
-        bm_tris = bm.calc_tessface()
-        
-        # get mesh infos
-        export_mats = helper.get_used_materials(obj, apply_modifiers_G)
-        total_verts = len(bm.verts)
-        total_faces = int(len(bm_tris) * 3)
-        num_sections = len(export_mats)
-        
-        #build FVF
-        FVF_FLAGS = FVF(("D3DFVF_XYZ", "D3DFVF_NORMAL", "D3DFVF_TEX1"))
-        for mat in obj.data.materials:
-            if mat is not None and mat.use_shadeless:
-                # undo the previous flag since we arent
-                # going to write normals
-                FVF_FLAGS.clear_flag("D3DFVF_NORMAL")
-                break
-        if "VC_DIFFUSE" in options:
-            FVF_FLAGS.set_flag("D3DFVF_DIFFUSE")
-        if "VC_SPECULAR" in options:
-            FVF_FLAGS.set_flag("D3DFVF_SPECULAR")
-
-        # do we need a matrix file. Only for H object
-        if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
-            helper.write_matrix(obj.name, obj, pkg_path)
-
-        # write mesh data header
-        file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
-
-        # write sections
-        cur_material_index = -1
-        for mat_slot in obj.material_slots:
-            # are we exporting this material?
-            cur_material_index += 1
-            if not cur_material_index in export_mats:
-              continue
-        
-            # build the mesh data we need
-            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, cur_material_index, bm_tris)
-
-            # mesh remap done. we will now write our strip
-            num_strips = 1
-            section_flags = 0
-            shader_offset = material_remap_table[helper.get_material_offset(obj.material_slots[cur_material_index].material)]
-            
-            # write strip to file
-            file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
-            strip_primType = 3
-            strip_vertices = len(cmtl_verts)
-            file.write(struct.pack('LL', strip_primType, strip_vertices))
-            
-            # write vertices
-            for cv in range(len(cmtl_verts)):
-                export_vert = cmtl_verts[cv]
-                export_vert_location = (obj.matrix_world * export_vert.co) - obj.location
-                bin.write_float3(file, (export_vert_location[0], export_vert_location[2], export_vert_location[1] * -1))
-                if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                    bin.write_float3(file, (export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
-                if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
-                    bin.write_color4d(file, cmtl_cols[cv])
-                if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
-                    bin.write_color4d(file, cmtl_cols[cv])
-                uv_data = cmtl_uvs[cv]
-                bin.write_float2(file, (uv_data[0], (uv_data[1] - 1) * -1))
-            
-            # write indices
-            strip_indices_len = int(len(cmtl_indices) * 3)
-            file.write(struct.pack('L', strip_indices_len))
-            for ply in cmtl_indices:
-                file.write(struct.pack('HHH', ply[0], ply[1], ply[2]))
-        
-        # clean up temp_mesh
-        bpy.data.meshes.remove(temp_mesh)
-        bm.free()
-		
-        # write FILE length
-        file_data_length = file.tell() - file_data_start_offset
-        file.seek(file_data_start_offset - 4)
-        file.write(struct.pack('L', file_data_length))
-        file.seek(0, 2)
 
 
 ######################################################
@@ -389,11 +391,14 @@ def save_pkg(filepath,
         export_options.append("VC_SPECULAR")
     
     # what are we exporting?
-    export_objects = None
-    if selection_only:
-      export_objects = bpy.context.selected_objects
-    else:
-      export_objects = bpy.data.objects
+    export_objects = []
+    potential_objects = bpy.context.selected_objects if selection_only else bpy.data.objects
+
+    # sort through our potential objects
+    for obj in potential_objects:
+      ob_name = obj.name.upper()
+      if obj.type == 'EMPTY' and (ob_name in vehicle_list or ob_name in generic_list or ob_name in dash_list or ob_name in trailer_list):
+        export_objects.append(obj)
     
       
     # first we need to figure out the export type before anything
@@ -401,21 +406,21 @@ def save_pkg(filepath,
     export_typestr = 'generic'
     export_shadertype = 'byte'
     for obj in export_objects:
-        if obj.type == 'MESH':
-            # we can check this object :)
-            if obj.name.upper().startswith("DASH_"):
-                export_shadertype = 'float'
-                export_typestr = 'dash'
-                export_pred = dash_list
-                break
-            if obj.name.upper().startswith("BODY_"):
-                export_typestr = 'vehicle'
-                export_pred = vehicle_list
-                break
-            if obj.name.upper().startswith("TRAILER_"):
-                export_typestr = 'trailer'
-                export_pred = trailer_list
-                break
+      print("should export " + obj.name)
+      # we can check this object :)
+      if obj.name.upper() == "DASH":
+          export_shadertype = 'float'
+          export_typestr = 'dash'
+          export_pred = dash_list
+          break
+      if obj.name.upper() == "BODY":
+          export_typestr = 'vehicle'
+          export_pred = vehicle_list
+          break
+      if obj.name.upper() == "TRAILER":
+          export_typestr = 'trailer'
+          export_pred = trailer_list
+          break
 
     print('\tPKG autodetected export type: ' + export_typestr)
     
@@ -425,12 +430,6 @@ def save_pkg(filepath,
     global material_remap_table
     material_remap_table = export_material_remap
     
-    # finally we need to prepare our mesh list
-    export_meshlist = []
-    for obj in export_objects:
-        if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
-            export_meshlist.append(obj)
-
     # special case for dashboards, if no variants are specified, it crashes
     # so we'll make defaults here
     variants = paintjobs
@@ -441,7 +440,7 @@ def save_pkg(filepath,
     # WRITE PKG FILE
     file.write(bytes('PKG3', 'utf-8'))
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
-    export_meshes(file, reorder_objects(export_meshlist, export_pred), export_options)
+    export_meshes(file, reorder_objects(export_objects, export_pred), export_options)
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, get_replace_words(variants), export_materials, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
