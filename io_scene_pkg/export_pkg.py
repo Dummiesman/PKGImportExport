@@ -15,7 +15,8 @@ import os.path as path
 from io_scene_pkg.fvf import FVF
 
 import io_scene_pkg.binary_helper as bin
-import io_scene_pkg.export_helper as helper
+import io_scene_pkg.export_helper as export_helper
+import io_scene_pkg.common_helpers as helper
 
 from io_scene_pkg.shader_set import (ShaderSet, Shader)
 
@@ -57,6 +58,7 @@ vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
                 "SHAFT3_H", "SHAFT3_M", "SHAFT3_L", "SHAFT3_VL",
                 "AXLE0_H", "AXLE0_M", "AXLE0_L", "AXLE0_VL",
                 "AXLE1_H", "AXLE1_M", "AXLE1_L", "AXLE1_VL",
+                "ENGINE_H", "ENGINE_M", "ENGINE_L", "ENGINE_VL",
                 "WHL0_H", "WHL0_M", "WHL0_L", "WHL0_VL",
                 "WHL1_H", "WHL1_M", "WHL1_L", "WHL1_VL",
                 "WHL2_H", "WHL2_M", "WHL2_L", "WHL2_VL",
@@ -85,7 +87,7 @@ vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
                 "WHL4_H", "WHL4_M", "WHL4_L", "WHL4_VL",
                 "WHL5_H", "WHL5_M", "WHL5_L", "WHL5_VL"]
 
-# Vehicle Dashboards
+# Vehicle dashboards
 dash_list = ["DAMAGE_NEEDLE_H", "DAMAGE_NEEDLE_M", "DAMAGE_NEEDLE_L", "DAMAGE_NEEDLE_VL",
              "DASH_H", "DASH_M", "DASH_L", "DASH_VL",
              "GEAR_INDICATOR_H", "GEAR_INDICATOR_M", "GEAR_INDICATOR_L", "GEAR_INDICATOR_VL",
@@ -129,7 +131,7 @@ generic_list = ["H", "M", "L", "VL",
                 "WALK_NIGHT_H", "WALK_NIGHT_M", "WALK_NIGHT_L", "WALK_NIGHT_VL",
                 "NOWALK_NIGHT_H", "NOWALK_NIGHT_M", "NOWALK_NIGHT_L", "NOWALK_NIGHT_VL"]
 
-# do not export' list
+# Do not export list
 dne_list = ["BOUND", "BINARY_BOUND",
             "EXHAUST0_H", "EXHAUST0_M", "EXHAUST0_L", "EXHAUST0_VL",
             "EXHAUST1_H", "EXHAUST1_M", "EXHAUST1_L", "EXHAUST1_VL"]
@@ -203,7 +205,7 @@ def export_xrefs(file, selected_only):
             bin.write_matrix3x4(file, obj.matrix_basis)
            
             # write xref name
-            xref_name = helper.get_undupe_name(obj.name[5:]) + "\x00max"
+            xref_name = export_helper.get_undupe_name(obj.name[5:]) + "\x00max"
             null_length = 32 - len(xref_name)
             
             file.write(bytes(xref_name, 'utf-8'))
@@ -258,7 +260,7 @@ def export_shaders(file, context, type="byte"):
             material = bpy.data.materials[material_id]
             
             # create a shader for it, and write it
-            shader = helper.create_shader_from_material(material)
+            shader = export_helper.create_shader_from_material(material)
             shader.write(file, type)
     else:
         # write out user created variants
@@ -274,7 +276,7 @@ def export_shaders(file, context, type="byte"):
                         break
                 
                 # create a shader for it, and write it
-                shader = helper.create_shader_from_material(material)
+                shader = export_helper.create_shader_from_material(material)
                 shader.write(file, type)
 
     # write file length
@@ -284,11 +286,14 @@ def export_shaders(file, context, type="byte"):
     file.seek(0, 2)
 
 
-def export_meshes(file, meshlist, options):
+def export_geometry(file, meshlist, options):
     for obj in meshlist:
         # write FILE header for mesh name
-        bin.write_file_header(file, helper.get_undupe_name(obj.name))
+        bin.write_file_header(file, export_helper.get_undupe_name(obj.name))
         file_data_start_offset = file.tell()
+        
+        # don't multiply vertices for objects requring a matrix3x4 export
+        premultiply_vertices = not helper.is_matrix_object(obj)
         
         # create temp mesh
         temp_mesh = None
@@ -305,7 +310,7 @@ def export_meshes(file, meshlist, options):
         bm_tris = bm.calc_loop_triangles()
         
         # get mesh infos
-        export_mats = helper.get_used_materials(obj, "MODIFIERS" in options)
+        export_mats = export_helper.get_used_materials(obj, "MODIFIERS" in options)
         total_verts = len(bm.verts)
         total_faces = int(len(bm_tris) * 3)
         num_sections = len(export_mats)
@@ -316,7 +321,7 @@ def export_meshes(file, meshlist, options):
         #build FVF
         FVF_FLAGS = FVF(("D3DFVF_XYZ", "D3DFVF_NORMAL", "D3DFVF_TEX1"))
         for mat in obj.data.materials:
-            if mat is not None and helper.is_mat_shadeless(mat):
+            if mat is not None and export_helper.is_mat_shadeless(mat):
                 # undo the previous flag since we arent
                 # going to write normals
                 FVF_FLAGS.clear_flag("D3DFVF_NORMAL")
@@ -328,7 +333,7 @@ def export_meshes(file, meshlist, options):
 
         # do we need a matrix file? Only for H object
         if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
-            helper.write_matrix(obj.name, obj, pkg_path)
+            export_helper.write_matrix(obj.name, obj, pkg_path)
 
         # write mesh data header
         file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
@@ -347,7 +352,7 @@ def export_meshes(file, meshlist, options):
               continue
         
             # build the mesh data we need
-            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = helper.prepare_mesh_data(bm, cur_material_index, bm_tris)
+            cmtl_indices, cmtl_verts, cmtl_uvs, cmtl_cols = export_helper.prepare_mesh_data(bm, cur_material_index, bm_tris)
 
             # mesh remap done. we will now write our strip
             num_strips = 1
@@ -363,7 +368,7 @@ def export_meshes(file, meshlist, options):
             # write vertices
             for cv in range(len(cmtl_verts)):
                 export_vert = cmtl_verts[cv]
-                export_vert_location = (obj.matrix_world @ export_vert.co) - obj.location
+                export_vert_location = ((obj.matrix_world @ export_vert.co) - obj.location) if premultiply_vertices else export_vert.co
                 bin.write_float3(file, (export_vert_location[0], export_vert_location[2], export_vert_location[1] * -1))
                 if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
                     bin.write_float3(file, (export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
@@ -448,7 +453,7 @@ def save_pkg(filepath,
     
     # next we need to prepare our material list
     global material_remap_table
-    material_remap_table = helper.create_material_remap(apply_modifiers)
+    material_remap_table = export_helper.create_material_remap(apply_modifiers)
     
     # finally we need to prepare our mesh list
     export_meshlist = []
@@ -467,7 +472,7 @@ def save_pkg(filepath,
     # begin write pkg file
     file.write(bytes('PKG3', 'utf-8'))
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
-    export_meshes(file, reorder_objects(export_meshlist, export_pred), export_options)
+    export_geometry(file, reorder_objects(export_meshlist, export_pred), export_options)
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, context, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))

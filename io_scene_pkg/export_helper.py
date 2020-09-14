@@ -10,7 +10,8 @@ import bpy, bmesh
 import struct
 
 from io_scene_pkg.shader_set import (ShaderSet, Shader)
-from io_scene_pkg.suspension_tools import OBJECT_PT_SuspensionPanel
+import io_scene_pkg.common_helpers as helper
+import io_scene_pkg.binary_helper as bin
 
 def get_undupe_name(name):
     nidx = name.find('.')
@@ -108,9 +109,6 @@ def create_shader_from_material(mat):
     
     return shader
     
-def get_raw_object_name(meshname):
-    return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
-
 def get_used_materials(ob, modifiers):
     """search for used materials at object level"""
     used_materials = []
@@ -187,38 +185,6 @@ def bounds(obj):
     o_details = collections.namedtuple('object_details', 'x y z')
     return o_details(**originals)
 
-def write_matrix_suspension(object, file):
-    suspension_scale = object.suspension_settings.scale
-    suspension_pivot = object.suspension_settings.alignment
-    
-    # convert axes
-    suspension_scale = (suspension_scale[0], suspension_scale[2], suspension_scale[1] * -1)
-    suspension_pivot = (suspension_pivot[0], suspension_pivot[2], suspension_pivot[1] * -1)
-    
-    # setup min and max
-    mtx_max = [0, 0, 0]
-    mtx_min = [0, 0, 0]
-    
-    for i in range(3):
-        if suspension_scale[i] < 0:
-            mtx_min[i] = abs(suspension_scale[i])
-        else:
-            mtx_max[i] = suspension_scale[i]
-    
-    # write
-    file.write(struct.pack('ffffffffffff', mtx_min[0],
-                                           mtx_min[1],
-                                           mtx_min[2],
-                                           mtx_max[0],
-                                           mtx_max[1],
-                                           mtx_max[2],
-                                           suspension_pivot[0],
-                                           suspension_pivot[1],
-                                           suspension_pivot[2],
-                                           object.location.x,
-                                           object.location.z,
-                                           object.location.y * -1))
-    
 def write_matrix_standard(object, file):
     bnds = bounds(object)
     file.write(struct.pack('ffffffffffff', bnds.x.min,
@@ -238,14 +204,13 @@ def write_matrix_standard(object, file):
                                            
 def write_matrix(meshname, object, pkg_path):
     """write a *.mtx file"""
-    mesh_name_parsed = get_raw_object_name(meshname)
+    mesh_name_parsed = helper.get_raw_object_name(meshname)
     mtx_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
 
     mtxfile = open(mtx_path, 'wb')
     
-    # todo: maybe make a common_helpers for this, using OBJECT_PT_SuspensionPanel is ugly
-    if OBJECT_PT_SuspensionPanel.is_suspension_object(object):
-        write_matrix_suspension(object, mtxfile)
+    if helper.is_matrix_object(object):
+        bin.write_matrix3x4(mtxfile, object.matrix_world)
     else:
         write_matrix_standard(object, mtxfile)
 

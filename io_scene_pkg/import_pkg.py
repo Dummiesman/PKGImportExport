@@ -16,7 +16,8 @@ from io_scene_pkg.fvf import FVF
 from io_scene_pkg.shader_set import (ShaderSet, Shader)
 
 import io_scene_pkg.binary_helper as bin
-import io_scene_pkg.import_helper as helper
+import io_scene_pkg.import_helper as import_helper
+import io_scene_pkg.common_helpers as helper
 
 pkg_path = None
 
@@ -46,7 +47,7 @@ def read_shaders_file(file, length, offset, context):
         mtl = bpy.data.materials.get(str(shader_num))
         mtlname = "pkgmaterial_" + str(shader_num)
         if mtl is not None:
-            helper.populate_material(context, mtl, shader, pkg_path)
+            import_helper.populate_material(context, mtl, shader, pkg_path)
             base_material_set.append(mtl)
             mtl.name = mtlname
         else:
@@ -83,7 +84,7 @@ def read_shaders_file(file, length, offset, context):
             variant_material = tool_variant.add_material(base_mtl)
             
             # adjust the cloned version
-            helper.populate_material(context, variant_material.material, shader, pkg_path)
+            import_helper.populate_material(context, variant_material.material, shader, pkg_path)
             
     
     # skip to the end of this FILE
@@ -179,7 +180,7 @@ def read_geometry_file(file, meshname):
             for i in range(num_vertices):
                 # read in raw data
                 vpos = bin.read_float3(file)
-                vnorm, vuv, vcolor = helper.read_vertex_data(file, FVF_FLAGS, FLAG_compact_strips)
+                vnorm, vuv, vcolor = import_helper.read_vertex_data(file, FVF_FLAGS, FLAG_compact_strips)
                
                 # convert coordinate spaces
                 age_norm = (vnorm[0], vnorm[2] * -1, vnorm[1])
@@ -214,7 +215,7 @@ def read_geometry_file(file, meshname):
             triangle_data = None
             if FLAG_compact_strips and prim_type == 4:
              tristrip_data = struct.unpack(str(num_indices) + 'H', file.read(2 * num_indices))
-             triangle_data = helper.convert_triangle_strips(tristrip_data)
+             triangle_data = import_helper.convert_triangle_strips(tristrip_data)
             else:
              triangle_data = struct.unpack(str(num_indices) + 'H', file.read(2 * num_indices))
 
@@ -257,14 +258,16 @@ def read_geometry_file(file, meshname):
     # lastly, look for a MTX file. Don't grab an MTX for FNDR_M/L/VL though
     # as the FNDR lods are static and don't use the mtx
     if not ("fndr" in meshname.lower() and not "_h" in meshname.lower()):
-      found, min, max, pivot, origin = helper.find_matrix(meshname, ob, pkg_path)
-      if found:
-        ob.location = origin
-        
-        # setup suspension settings
-        ob.suspension_settings.scale = ((max[0] - min[0]), (max[1] - min[1]), (max[2] - min[2]))
-        ob.suspension_settings.alignment = pivot
-      
+      if helper.is_matrix_object(ob):
+        # some objects actually use MTX as a matrix.
+        mtx = import_helper.find_matrix3x4(meshname, pkg_path)
+        ob.matrix_world = mtx
+      else:
+        # others use it as min,max,pivot,origin
+        found, min, max, pivot, origin = import_helper.find_matrix(meshname, pkg_path)
+        if found:
+            ob.location = origin
+          
     return
 
 ######################################################

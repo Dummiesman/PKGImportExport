@@ -22,7 +22,17 @@ def get_object_name_without_lod_suffix(meshname):
     """Strips off all suffixes for LOD"""
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
 
-def find_matrix(meshname, object, pkg_path):
+def find_matrix3x4(meshname, pkg_path):
+    """search for *.mtx and load if found"""
+    mesh_name_parsed = get_object_name_without_lod_suffix(meshname)
+    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
+    
+    if path.isfile(find_path):
+        mtxfile = open(find_path, 'rb')
+        return bin.read_matrix3x4(mtxfile)
+    return None
+    
+def find_matrix(meshname, pkg_path):
     """search for *.mtx and load if found"""
     mesh_name_parsed = get_object_name_without_lod_suffix(meshname)
     find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
