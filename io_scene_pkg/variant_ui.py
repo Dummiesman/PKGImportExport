@@ -16,8 +16,9 @@ from bpy.props import (IntProperty,
 # -------------------------------------------------------------------
 #   Operators
 # -------------------------------------------------------------------
+        
 class AddVariantOperator(Operator):
-    bl_idname = "wm.age_add_variant"
+    bl_idname = "angel.add_variant"
     bl_label = "Add Variant"
     
     def execute(self, context):
@@ -36,7 +37,7 @@ class AddVariantOperator(Operator):
         return {'FINISHED'}
 
 class DeleteVariantOperator(Operator):
-    bl_idname = "wm.age_delete_variant"
+    bl_idname = "angel.delete_variant"
     bl_label = "Delete Variant"
     
     def execute(self, context):
@@ -56,8 +57,25 @@ class DeleteVariantOperator(Operator):
         
         return {'FINISHED'}
         
+class DeleteVariantConfirmOperator(Operator):
+    """Really?"""
+    bl_idname = "angel.delete_variant_confirm"
+    bl_label = "Do you really want to delete this variant?"
+    bl_options = {'REGISTER', 'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        bpy.ops.angel.delete_variant()
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+        
 class RemoveMaterialFromVariantOperator(Operator):
-    bl_idname = "wm.age_remove_material_from_variant"
+    bl_idname = "angel.remove_material_from_variant"
     bl_label = "Remove Material From Variant"
     
     def execute(self, context):
@@ -76,7 +94,7 @@ class RemoveMaterialFromVariantOperator(Operator):
         return {'FINISHED'}
         
 class AddMaterialToVariantOperator(Operator):
-    bl_idname = "wm.age_add_material_to_variant"
+    bl_idname = "angel.add_material_to_variant"
     bl_label = "Add Material To Variant"
     
     def execute(self, context):
@@ -156,9 +174,9 @@ class ANGEL_UL_materials_unused(UIList):
     def invoke(self, context, event):
         pass
         
-class OBJECT_PT_AngelPanel(Panel):
+class ANGEL_PT_AngelPanel(Panel):
     bl_label = "Angel Tools"
-    bl_idname = "OBJECT_PT_custom_panel"
+    bl_idname = "ANGEL_PT_angel_tools_panel"
     bl_space_type = "VIEW_3D"   
     bl_region_type = "UI"
     bl_category = "Angel Tools" 
@@ -178,15 +196,15 @@ class OBJECT_PT_AngelPanel(Panel):
         
         row = layout.row()
         row.label(text=str(len(angel.variants)) + " variants")
-        row.operator("wm.age_delete_variant", text = "-")
-        row.operator("wm.age_add_variant", text = "+")
+        row.operator("angel.delete_variant_confirm", text= "-")
+        row.operator("angel.add_variant", text= "+")
         
         layout.prop(angel, "selected_variant")
         selected_variant = angel.selected_variant
         
         layout.separator()
         if selected_variant >= len(angel.variants):
-            layout.label(text="Selected variant out of range.")
+            layout.label(text="Selected variant has not been created yet.")
         else:
             variant = angel.variants[selected_variant]
             
@@ -199,7 +217,7 @@ class OBJECT_PT_AngelPanel(Panel):
             
             # draw remove from button
             row = layout.row()
-            row.operator("wm.age_remove_material_from_variant")
+            row.operator("angel.remove_material_from_variant")
             
             # draw selected mat
             #layout.template_preview(context.active_object.active_material, show_buttons=True)
@@ -210,13 +228,7 @@ class OBJECT_PT_AngelPanel(Panel):
             
             # draw add to button
             row = layout.row()
-            row.operator("wm.age_add_material_to_variant")
-            
-        
-        #layout.label(text="Variant Chooser")
-        #layout.operator("wm.age_prev_variant")
-        #layout.operator("wm.age_next_variant")
-        
+            row.operator("angel.add_material_to_variant")
 
 
 # -------------------------------------------------------------------
@@ -226,9 +238,10 @@ class OBJECT_PT_AngelPanel(Panel):
 classes = (
     AddVariantOperator,
     DeleteVariantOperator,
+    DeleteVariantConfirmOperator,
     AddMaterialToVariantOperator,
     RemoveMaterialFromVariantOperator,
-    OBJECT_PT_AngelPanel,
+    ANGEL_PT_AngelPanel,
     ANGEL_UL_materials,
     ANGEL_UL_materials_unused
 )

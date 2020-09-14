@@ -78,7 +78,7 @@ class Variant(PropertyGroup):
     def remove_all_materials(self):
         for vm in self.materials:
             material = vm.material
-            bpy.data.materials.remove(material, do_unlink=True)
+            bpy.data.materials.remove(material, do_unlink=True) # this is a cloned material, so we delete it once it's no longer used
         self.materials.clear()
         
     def remove_material(self, material):
