@@ -1,5 +1,6 @@
 import bpy
-import re
+import textwrap 
+
 from bpy.types import (Panel,
                        Menu,
                        Operator,
@@ -223,9 +224,6 @@ class ANGEL_PT_AngelPanel(Panel):
             row = layout.row()
             row.operator("angel.remove_material_from_variant")
             
-            # draw selected mat
-            #layout.template_preview(context.active_object.active_material, show_buttons=True)
-            
             # draw unused list
             layout.label(text="Materials Not In Variant (Shared)")
             layout.template_list("ANGEL_UL_materials_unused", "", bpy.data, "materials", angel, "material_pool_index", rows=rows)           
@@ -233,7 +231,18 @@ class ANGEL_PT_AngelPanel(Panel):
             # draw add to button
             row = layout.row()
             row.operator("angel.add_material_to_variant")
-
+        
+        # warn the user in case of dashboard, with some horrible text wrapping code
+        if (bpy.data.objects.get("dash_H") is not None or bpy.data.objects.get("DASH_H") is not None or bpy.data.objects.get("dash_h") is not None) and len(angel.variants) < 9:
+            missing_variant_count = 9 - len(angel.variants)
+            char_fit = context.region.width / 6
+            wrapp = textwrap.TextWrapper(width=char_fit)
+            wList = wrapp.wrap(text="WARNING: Your dashboard currently does not have enough variants, and will crash the game. You need to add " + str(missing_variant_count) + " more variant(s).")
+            
+            layout.separator()
+            for text in wList:
+                layout.label(text=text)
+            
 
 # -------------------------------------------------------------------
 #   Register & Unregister
