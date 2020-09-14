@@ -117,9 +117,13 @@ def get_used_materials(ob, modifiers):
     checked_material_indices = {}
     
     # create temp mesh
-    dg = bpy.context.evaluated_depsgraph_get()
-    eval_obj = ob.evaluated_get(dg)
-    temp_mesh = eval_obj.to_mesh()
+    temp_mesh = None
+    if modifiers:
+        dg = bpy.context.evaluated_depsgraph_get()
+        eval_obj = ob.evaluated_get(dg)
+        temp_mesh = eval_obj.to_mesh()
+    else:
+        temp_mesh = ob.to_mesh()
     
     # get bmesh
     bm = bmesh.new()

@@ -291,9 +291,13 @@ def export_meshes(file, meshlist, options):
         file_data_start_offset = file.tell()
         
         # create temp mesh
-        dg = bpy.context.evaluated_depsgraph_get()
-        eval_obj = obj.evaluated_get(dg)
-        temp_mesh = eval_obj.to_mesh()
+        temp_mesh = None
+        if "MODIFIERS" in options:
+            dg = bpy.context.evaluated_depsgraph_get()
+            eval_obj = obj.evaluated_get(dg)
+            temp_mesh = eval_obj.to_mesh()
+        else:
+            temp_mesh = obj.to_mesh()
     
         # get bmesh
         bm = bmesh.new()
