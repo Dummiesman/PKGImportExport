@@ -20,6 +20,7 @@ from bpy.props import (IntProperty,
 class AddVariantOperator(Operator):
     bl_idname = "angel.add_variant"
     bl_label = "Add Variant"
+    bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
         scene = context.scene
@@ -39,6 +40,7 @@ class AddVariantOperator(Operator):
 class DeleteVariantOperator(Operator):
     bl_idname = "angel.delete_variant"
     bl_label = "Delete Variant"
+    bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
         scene = context.scene
@@ -61,7 +63,7 @@ class DeleteVariantConfirmOperator(Operator):
     """Really?"""
     bl_idname = "angel.delete_variant_confirm"
     bl_label = "Do you really want to delete this variant?"
-    bl_options = {'REGISTER', 'INTERNAL'}
+    bl_options = {'INTERNAL'}
 
     @classmethod
     def poll(cls, context):
@@ -77,6 +79,7 @@ class DeleteVariantConfirmOperator(Operator):
 class RemoveMaterialFromVariantOperator(Operator):
     bl_idname = "angel.remove_material_from_variant"
     bl_label = "Remove Material From Variant"
+    bl_options = {'INTERNAL','REGISTER', 'UNDO'}
     
     def execute(self, context):
         scene = context.scene
@@ -96,6 +99,7 @@ class RemoveMaterialFromVariantOperator(Operator):
 class AddMaterialToVariantOperator(Operator):
     bl_idname = "angel.add_material_to_variant"
     bl_label = "Add Material To Variant"
+    bl_options = {'INTERNAL','REGISTER', 'UNDO'}
     
     def execute(self, context):
         scene = context.scene
