@@ -22,29 +22,30 @@ def read_angel_string(file):
         return return_string
 
 def read_float(file):
-    return struct.unpack('f', file.read(4))[0]
+    return struct.unpack('<f', file.read(4))[0]
 
 
 def read_float3(file):
-    return struct.unpack('fff', file.read(12))
+    return struct.unpack('<fff', file.read(12))
 
 
 def read_cfloat3(file):
-    btc = struct.unpack('BBB', file.read(3))
-    return (btc[0]-128)/128, (btc[1]-128)/128, (btc[2]-128)/128
+    btc_data = file.read(3)    
+    btc = (btc_data[0] - 128, btc_data[1] - 128, btc_data[2] - 128)
+    return float(btc[0]) / 127, float(btc[1]) / 127, float(btc[2])  / 127
 
 
 def read_cfloat2(file):
-    stc = struct.unpack('HH', file.read(4))
+    stc = struct.unpack('<HH', file.read(4))
     return (stc[0]/128) - 128, (stc[1]/128) - 128
 
 
 def read_float2(file):
-    return struct.unpack('ff', file.read(8))
+    return struct.unpack('<ff', file.read(8))
 
 
 def read_color4f(file):
-    return struct.unpack('ffff', file.read(16))
+    return struct.unpack('<ffff', file.read(16))
 
 
 def read_color4d(file):
@@ -52,10 +53,10 @@ def read_color4d(file):
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
     
 def read_matrix3x4(file):
-    row1r = list(struct.unpack('fff', file.read(12)))
-    row2r = list(struct.unpack('fff', file.read(12)))
-    row3r = list(struct.unpack('fff', file.read(12)))
-    translation = struct.unpack('fff', file.read(12))
+    row1r = list(struct.unpack('<fff', file.read(12)))
+    row2r = list(struct.unpack('<fff', file.read(12)))
+    row3r = list(struct.unpack('<fff', file.read(12)))
+    translation = struct.unpack('<fff', file.read(12))
     
     # rotate the matrix
     row1 = [row1r[0], row2r[0], row3r[0]]
@@ -117,25 +118,24 @@ def write_matrix3x4(file, matrix):
 # WRITE #
 #########
 def write_angel_string(file, strng):
-    str_len = len(strng)
-    if str_len > 0:
-        file.write(struct.pack('B', str_len+1))
+    if strng is not None and len(strng) > 0:
+        file.write(struct.pack('B', len(strng)+1))
         file.write(bytes(strng, 'UTF-8'))
         file.write(bytes('\x00', 'UTF-8'))
     else:
         file.write(struct.pack('B', 0))
 
 def write_float2(file, data):
-    file.write(struct.pack('ff', data[0], data[1]))
+    file.write(struct.pack('<ff', data[0], data[1]))
     
 def write_float3(file, data):
-    file.write(struct.pack('fff', data[0], data[1], data[2]))
+    file.write(struct.pack('<fff', data[0], data[1], data[2]))
     
 def write_color4d(file, color, alpha=1):
     file.write(struct.pack('BBBB', int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), int(alpha * 255)))
     
 def write_color4f(file, color, alpha=1):
-    file.write(struct.pack('ffff', color[0], color[1], color[2], alpha))
+    file.write(struct.pack('<ffff', color[0], color[1], color[2], alpha))
 
 
 def write_file_header(file, name, length=0):
