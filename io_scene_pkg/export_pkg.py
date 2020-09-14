@@ -153,11 +153,6 @@ def reorder_objects(lst, pred):
     return [x for x in return_list if x is not None] + append_list
 
 
-def get_undupe_name(name):
-    nidx = name.find('.')
-    return name[:nidx] if nidx != -1 else name
-
-
 def get_replace_words(rpl_str):
     if len(rpl_str) == 0:
         return []
@@ -211,7 +206,7 @@ def export_xrefs(file, selected_only):
             bin.write_matrix3x4(file, obj.matrix_basis)
            
             # write xref name
-            xref_name = get_undupe_name(obj.name[5:]) + "\x00max"
+            xref_name = helper.get_undupe_name(obj.name[5:]) + "\x00max"
             null_length = 32 - len(xref_name)
             
             file.write(bytes(xref_name, 'utf-8'))
@@ -295,7 +290,7 @@ def export_shaders(file, context, type="byte"):
 def export_meshes(file, meshlist, options):
     for obj in meshlist:
         # write FILE header for mesh name
-        bin.write_file_header(file, get_undupe_name(obj.name))
+        bin.write_file_header(file, helper.get_undupe_name(obj.name))
         file_data_start_offset = file.tell()
         
         # create temp mesh

@@ -12,6 +12,10 @@ import struct
 from io_scene_pkg.shader_set import (ShaderSet, Shader)
 from io_scene_pkg.suspension_tools import OBJECT_PT_SuspensionPanel
 
+def get_undupe_name(name):
+    nidx = name.find('.')
+    return name[:nidx] if nidx != -1 else name
+    
 def is_mat_shadeless(mat):
     for node in mat.node_tree.nodes:
         if node.type == "EMISSION":
@@ -48,11 +52,11 @@ def create_shader_from_material(mat):
                     image_node = inp.links[0].from_node
                     if image_node.type == "TEX_IMAGE":
                         if image_node.image is not None:
-                            shader.name = image_node.image.name
+                            shader.name = get_undupe_name(image_node.image.name)
         elif color_input_node.type == "TEX_IMAGE":
             # we directly have a texture input
             if color_input_node.image is not None:
-                shader.name = color_input_node.image.name
+                shader.name = get_undupe_name(color_input_node.image.name)
         else:
             print("Unsupported diffuse link type. Using default value for diffuse_color.")
     else:
@@ -106,17 +110,6 @@ def create_shader_from_material(mat):
     
 def get_raw_object_name(meshname):
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
-
-    
-def get_material_offset(mtl):
-    # :( hack
-    coffset = 0
-    for mat in bpy.data.materials:
-        if mtl.name == mat.name:
-            return coffset
-        coffset += 1
-    return -1
-
 
 def get_used_materials(ob, modifiers):
     """search for used materials at object level"""
