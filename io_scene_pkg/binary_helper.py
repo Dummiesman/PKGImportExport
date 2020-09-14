@@ -3,7 +3,7 @@
 # This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
 
@@ -53,7 +53,8 @@ def read_color4f(file):
 def read_color4d(file):
     c4d = struct.unpack('BBBB', file.read(4))
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
-    
+
+
 def read_matrix3x4(file):
     row1r = list(struct.unpack('<fff', file.read(12)))
     row2r = list(struct.unpack('<fff', file.read(12)))
@@ -80,6 +81,9 @@ def read_matrix3x4(file):
     
     return mtx.to_4x4()
 
+#########
+# WRITE #
+#########
 def write_matrix3x4(file, matrix):  
     # passed by ref, don't mess that up
     matrix = matrix.copy() 
@@ -99,10 +103,8 @@ def write_matrix3x4(file, matrix):
     file.write(struct.pack('<fff', matrix[0][1], matrix[1][1], matrix[2][1]))
     file.write(struct.pack('<fff', matrix[0][2], matrix[1][2], matrix[2][2]))
     file.write(struct.pack('<fff', matrix[0][3], matrix[1][3], matrix[2][3]))
+    
 
-#########
-# WRITE #
-#########
 def write_angel_string(file, strng):
     if strng is not None and len(strng) > 0:
         file.write(struct.pack('B', len(strng)+1))
@@ -111,15 +113,19 @@ def write_angel_string(file, strng):
     else:
         file.write(struct.pack('B', 0))
 
+
 def write_float2(file, data):
     file.write(struct.pack('<ff', data[0], data[1]))
+
     
 def write_float3(file, data):
     file.write(struct.pack('<fff', data[0], data[1], data[2]))
+
     
 def write_color4d(file, color, alpha=1):
     file.write(struct.pack('BBBB', int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), int(alpha * 255)))
-    
+
+
 def write_color4f(file, color, alpha=1):
     file.write(struct.pack('<ffff', color[0], color[1], color[2], alpha))
 

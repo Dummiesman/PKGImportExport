@@ -1,8 +1,18 @@
+# ##### BEGIN LICENSE BLOCK #####
+#
+# This program is licensed under Creative Commons BY-NC-SA:
+# https://creativecommons.org/licenses/by-nc-sa/3.0/
+#
+# Created by Dummiesman, 2016-2020
+#
+# ##### END LICENSE BLOCK #####
+
 import io_scene_pkg.binary_helper as bin
 import struct
 
 class Shader:
     def print(self):
+        # lazyily written debug function
         print("=== SHADER: " + str(self.name) + " ===")
         print("Diffuse Color is [" + str(self.diffuse_color[0]) + ","+ str(self.diffuse_color[1]) + ","+ str(self.diffuse_color[2]) + ","+ str(self.diffuse_color[3]) + "]")
         print("Ambient Color is [" + str(self.ambient_color[0]) + ","+ str(self.ambient_color[1]) + ","+ str(self.ambient_color[2]) + ","+ str(self.ambient_color[3]) + "]")
@@ -81,7 +91,8 @@ class Shader:
         
     def __ne__(self, obj):
         return not self == obj
-        
+   
+
 class ShaderSet:
     def read(self, file):
         shadertype_raw, shaders_per_paintjob = struct.unpack('2L', file.read(8))

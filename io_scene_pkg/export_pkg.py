@@ -3,7 +3,7 @@
 # This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
 
@@ -152,36 +152,6 @@ def reorder_objects(lst, pred):
     return [x for x in return_list if x is not None] + append_list
 
 
-def get_replace_words(rpl_str):
-    if len(rpl_str) == 0:
-        return []
-    base_list = rpl_str.split('|')
-    ret_list = [None] * len(base_list)
-    for num in range(len(base_list)):
-        v = base_list[num].split(',')
-        if(len(v) < 2):
-            v.append(v[0])
-        ret_list[num] = v
-    return ret_list
-
-
-def find_object_ci(name):
-    for obj in bpy.data.objects:
-        if obj.name.lower() == name.lower():
-            return obj
-    return None
-
-
-def handle_replace_logic(rw1, rw2, rpd):
-  # exact match mode? return replace word
-  if rw1.startswith("\"") and rw1.endswith("\""):
-    matchto = rw1[1:-1].lower()
-    if rpd.lower() == matchto:
-      return rw2
-  
-  # basic logic
-  return rpd.replace(rw1, rw2)
-
 ######################################################
 # EXPORT MAIN FILES
 ######################################################
@@ -189,7 +159,7 @@ def export_xrefs(file, selected_only):
     # build list of xrefs to export
     xref_objects = []
     for obj in bpy.data.objects:
-        if obj.name.startswith("xref:"):
+        if obj.name.lower().startswith("xref:"):
             if (selected_only and obj in bpy.context.selected_objects) or not selected_only:
                 xref_objects.append(obj)
 
@@ -215,8 +185,6 @@ def export_xrefs(file, selected_only):
         file.seek(xref_num_offset - 4, 0)
         file.write(struct.pack('LL', file_length, num_xrefs))
         file.seek(0, 2)
-    else:
-        return
 
 
 def export_offset(file):
@@ -455,11 +423,11 @@ def save_pkg(filepath,
     global material_remap_table
     material_remap_table = export_helper.create_material_remap(apply_modifiers)
     
-    # finally we need to prepare our mesh list
-    export_meshlist = []
+    # finally we need to prepare our geometry list
+    export_geomlist = []
     for obj in export_objects:
         if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
-            export_meshlist.append(obj)
+            export_geomlist.append(obj)
 
     # TODO: What do we do here now??
     # special case for dashboards, if no variants are specified, it crashes
@@ -472,7 +440,7 @@ def save_pkg(filepath,
     # begin write pkg file
     file.write(bytes('PKG3', 'utf-8'))
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
-    export_geometry(file, reorder_objects(export_meshlist, export_pred), export_options)
+    export_geometry(file, reorder_objects(export_geomlist, export_pred), export_options)
     print('\t[%.4f] exporting shaders' % (time.clock() - time1))
     export_shaders(file, context, export_shadertype)
     print('\t[%.4f] exporting xrefs' % (time.clock() - time1))

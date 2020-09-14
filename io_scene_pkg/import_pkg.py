@@ -3,7 +3,7 @@
 # This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
 
@@ -94,6 +94,7 @@ def read_shaders_file(file, length, offset, context):
 
 def read_xrefs(file):
     scn = bpy.context.scene
+
     # read xrefs
     num_xrefs = struct.unpack('L', file.read(4))[0]
     for num in range(num_xrefs):
@@ -120,6 +121,7 @@ def read_xrefs(file):
 
 def read_geometry_file(file, meshname):
     scn = bpy.context.scene
+
     # add a mesh and link it to the scene
     me = bpy.data.meshes.new(meshname+'Mesh')
     ob = bpy.data.objects.new(meshname, me)

@@ -1,3 +1,12 @@
+# ##### BEGIN LICENSE BLOCK #####
+#
+# This program is licensed under Creative Commons BY-NC-SA:
+# https://creativecommons.org/licenses/by-nc-sa/3.0/
+#
+# Created by Dummiesman, 2016-2020
+#
+# ##### END LICENSE BLOCK #####
+
 from enum import IntEnum
 import struct
 import bpy
@@ -219,4 +228,3 @@ class TEXFile:
         
         if filepath is not None:
             self.read(filepath)
-

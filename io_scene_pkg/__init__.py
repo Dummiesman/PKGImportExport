@@ -1,22 +1,22 @@
 # ##### BEGIN LICENSE BLOCK #####
 #
-# This program is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 3.0
+# This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
 
 bl_info = {
     "name": "Angel Studios PKG Format",
     "author": "Dummiesman",
-    "version": (0, 4, 0),
-    "blender": (2, 80, 0),
+    "version": (1, 0, 0),
+    "blender": (2, 83, 0),
     "location": "File > Import-Export",
     "description": "Import-Export PKG files",
     "warning": "",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.7/Py/"
-                "Scripts/Import-Export/PKG",
+    "doc_url": "https://github.com/Dummiesman/PKGImportExport/",
+    "tracker_url": "https://github.com/Dummiesman/PKGImportExport/",
     "support": 'COMMUNITY',
     "category": "Import-Export"}
 
@@ -65,30 +65,30 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
     bl_label = 'Export PKG'
 
     filename_ext = ".pkg"
-    filter_glob : StringProperty(
+    filter_glob: StringProperty(
             default="*.pkg",
             options={'HIDDEN'},
             )
 
-    e_vertexcolors : BoolProperty(
+    e_vertexcolors: BoolProperty(
         name="Vertex Colors (Diffuse)",
         description="Export vertex colors that affect diffuse",
         default=False,
         )
         
-    e_vertexcolors_s : BoolProperty(
+    e_vertexcolors_s: BoolProperty(
         name="Vertex Colors (Specular)",
         description="Export vertex colors that affect specular",
         default=False,
         )
         
-    apply_modifiers : BoolProperty(
+    apply_modifiers: BoolProperty(
         name="Apply Modifiers",
         description="Do you desire modifiers to be applied in the PKG?",
         default=True,
         )
         
-    selection_only : BoolProperty(
+    selection_only: BoolProperty(
         name="Selection Only",
         description="Export only selected elements",
         default=False,
@@ -138,18 +138,18 @@ def register():
 
 def unregister():
     del bpy.types.Scene.angel
-    del bpy.types.Material.variant 
     del bpy.types.Material.cloned_from
+    del bpy.types.Material.variant 
     
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+
     variant_ui.unregister()
     angel_scenedata.unregister()
     
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
     bl_preferences.unregister()
-    
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     
 
 if __name__ == "__main__":

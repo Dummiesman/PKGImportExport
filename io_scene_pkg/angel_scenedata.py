@@ -1,3 +1,12 @@
+# ##### BEGIN LICENSE BLOCK #####
+#
+# This program is licensed under Creative Commons BY-NC-SA:
+# https://creativecommons.org/licenses/by-nc-sa/3.0/
+#
+# Created by Dummiesman, 2016-2020
+#
+# ##### END LICENSE BLOCK #####
+
 import bpy
 from bpy.props import (
         CollectionProperty,
@@ -31,6 +40,7 @@ class Variant(PropertyGroup):
             if ob.type != 'MESH':
                 continue
             
+            # loop through this objects materials, and find ones to replace/revert
             mtl_count = len(ob.data.materials)
             for i in range(mtl_count):
                 mtl = ob.data.materials[i]

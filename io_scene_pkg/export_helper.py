@@ -3,9 +3,10 @@
 # This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
+
 import bpy, bmesh
 import struct
 
