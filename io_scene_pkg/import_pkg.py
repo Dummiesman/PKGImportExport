@@ -35,12 +35,13 @@ def read_shaders_file(file, length, offset, context):
     if num_variants <= 0:
         return
         
+    num_shaders_per_variant = len(shader_set.variants[0])
+    
     # setup base material set
     base_material_set = []
     base_variant = shader_set.variants[0]
-    for shader_num in range(len(base_variant)):
+    for shader_num in range(num_shaders_per_variant):
         shader = base_variant[shader_num]
-        shader_name = "age:notexture" if shader.name is None else shader.name
         
         mtl = bpy.data.materials.get(str(shader_num))
         mtlname = "pkgmaterial_" + str(shader_num)
@@ -50,20 +51,31 @@ def read_shaders_file(file, length, offset, context):
             mtl.name = mtlname
         else:
             base_material_set.append(None) # SHOULD NOT HAPPEN!
-        
+    
+    # find what materials are equal across the board
+    # this will give us a reference point for setting up variant 0
+    variant_similarities = [0] * num_shaders_per_variant
+    for i in range(num_variants - 1, 0, -1):
+        variant_ref = shader_set.variants[i]
+        variant_prev = shader_set.variants[i-1]
+        for j in range(num_shaders_per_variant):
+            if variant_ref[j] == variant_prev[j]:
+                variant_similarities[j] += 1
+   
     # setup variants
-    for variant_num  in range(len(shader_set.variants)):
+    for variant_num  in range(num_variants):
         tool_variant = angel.variants.add() # add to our tool
         variant = shader_set.variants[variant_num]
-        for shader_num in range(len(variant)):
+        for shader_num in range(num_shaders_per_variant):
             shader = variant[shader_num]
             
-            # if this is equal to the base (and we aren't the first set), just continue on
-            if shader == base_variant[shader_num] and variant_num > 0:
+            # check if this shader is unique to this variant
+            if variant_num > 0 and shader == base_variant[shader_num]:
                 continue
-            
-            # get shader name and base material
-            shader_name = "age:notexture" if shader.name is None else shader.name
+            elif variant_num == 0 and variant_similarities[shader_num] == num_variants - 1:
+                continue
+
+            # get shader base material
             base_mtl = base_material_set[shader_num]
             
             # add the base material to the variant, returning the cloned, variant version
