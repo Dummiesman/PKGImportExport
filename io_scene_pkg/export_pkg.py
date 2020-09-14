@@ -23,9 +23,6 @@ from io_scene_pkg.shader_set import (ShaderSet, Shader)
 global pkg_path
 pkg_path = None
 
-global apply_modifiers_G
-apply_modifiers_G = True
-
 global material_remap_table
 material_remap_table = {}
 
@@ -304,7 +301,7 @@ def export_meshes(file, meshlist, options):
         bm_tris = bm.calc_loop_triangles()
         
         # get mesh infos
-        export_mats = helper.get_used_materials(obj, apply_modifiers_G)
+        export_mats = helper.get_used_materials(obj, "MODIFIERS" in options)
         total_verts = len(bm.verts)
         total_faces = int(len(bm_tris) * 3)
         num_sections = len(export_mats)
@@ -325,7 +322,7 @@ def export_meshes(file, meshlist, options):
         if "VC_SPECULAR" in options:
             FVF_FLAGS.set_flag("D3DFVF_SPECULAR")
 
-        # do we need a matrix file. Only for H object
+        # do we need a matrix file? Only for H object
         if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
             helper.write_matrix(obj.name, obj, pkg_path)
 
@@ -395,6 +392,7 @@ def export_meshes(file, meshlist, options):
 def save_pkg(filepath,
              e_vertexcolors,
              e_vertexcolors_s,
+             apply_modifiers,
              selection_only,
              context):
     global pkg_path
@@ -411,7 +409,9 @@ def save_pkg(filepath,
         export_options.append("VC_DIFFUSE")
     if e_vertexcolors_s:
         export_options.append("VC_SPECULAR")
-    
+    if apply_modifiers:
+        export_options.append("MODIFIERS")
+        
     # what are we exporting?
     export_objects = None
     if selection_only:
@@ -426,7 +426,6 @@ def save_pkg(filepath,
     export_shadertype = 'byte'
     for obj in export_objects:
         if obj.type == 'MESH':
-            # we can check this object :)
             if obj.name.upper().startswith("DASH_"):
                 export_shadertype = 'float'
                 export_typestr = 'dash'
@@ -445,7 +444,7 @@ def save_pkg(filepath,
     
     # next we need to prepare our material list
     global material_remap_table
-    material_remap_table = helper.create_material_remap(apply_modifiers_G)
+    material_remap_table = helper.create_material_remap(apply_modifiers)
     
     # finally we need to prepare our mesh list
     export_meshlist = []
@@ -453,6 +452,7 @@ def save_pkg(filepath,
         if (obj.type == 'MESH' and not obj.name.upper() in dne_list):
             export_meshlist.append(obj)
 
+    # TODO: What do we do here now??
     # special case for dashboards, if no variants are specified, it crashes
     # so we'll make defaults here
     #variants = paintjobs
@@ -460,7 +460,7 @@ def save_pkg(filepath,
     #  if not "|" in paintjobs or not "," in paintjobs or not paintjobs.strip():
     #    variants = '"R",N|"R",one|"R",two|"R",three|"R",four|"R",five|"R",six'
     
-    # WRITE PKG FILE
+    # begin write pkg file
     file.write(bytes('PKG3', 'utf-8'))
     print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
     export_meshes(file, reorder_objects(export_meshlist, export_pred), export_options)
@@ -470,7 +470,7 @@ def save_pkg(filepath,
     export_xrefs(file, selection_only)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
     export_offset(file)
-    # PKG WRITE DONE
+    # end write pkg file
     print(" done in %.4f sec." % (time.clock() - time1))
     file.close()
 
@@ -484,15 +484,11 @@ def save(operator,
          selection_only=False
          ):
     
-    
-    # set globals
-    global apply_modifiers_G
-    apply_modifiers_G = apply_modifiers
-    
     # save PKG
     save_pkg(filepath,
              e_vertexcolors,
              e_vertexcolors_s,
+             apply_modifiers,
              selection_only,
              context,
              )

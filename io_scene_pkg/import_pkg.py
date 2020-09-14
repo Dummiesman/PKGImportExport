@@ -53,7 +53,8 @@ def read_shaders_file(file, length, offset, context):
             base_material_set.append(None) # SHOULD NOT HAPPEN!
     
     # find what materials are equal across the board
-    # this will give us a reference point for setting up variant 0
+    # this will give us the ability of quickly checking if variants are unique
+    # but also a reference point for variant 0
     variant_similarities = [0] * num_shaders_per_variant
     for i in range(num_variants - 1, 0, -1):
         variant_ref = shader_set.variants[i]
@@ -70,9 +71,9 @@ def read_shaders_file(file, length, offset, context):
             shader = variant[shader_num]
             
             # check if this shader is unique to this variant
-            if variant_num > 0 and shader == base_variant[shader_num]:
+            if variant_similarities[shader_num] == num_variants - 1:
                 continue
-            elif variant_num == 0 and variant_similarities[shader_num] == num_variants - 1:
+            elif variant_num > 0 and shader == base_variant[shader_num]:
                 continue
 
             # get shader base material
@@ -128,7 +129,6 @@ def read_geometry_file(file, meshname):
     
     # create layers for this object
     uv_layer = bm.loops.layers.uv.new()
-    #tex_layer = bm.faces.layers.tex.new()
     vc_layer = bm.loops.layers.color.new()
     
     # link to scene
@@ -141,7 +141,6 @@ def read_geometry_file(file, meshname):
     FVF_FLAGS = FVF(fvf)
 
     # mesh data holders
-    custom_normals = []
     ob_current_material = -1
 
     vertex_remap_table = {}
