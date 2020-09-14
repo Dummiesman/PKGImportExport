@@ -1,6 +1,6 @@
 Blender PKG Add-On
-Version 1.0
-September 13th 2020
+Version 1.0 RC1
+September 14th 2020
 
 Created by Dummiesman
 
@@ -46,7 +46,6 @@ Created by Dummiesman
     
     Here you can create and edit paintjobs (variants). 
     
-
   MTX Files
     MTX files will be created if the location of an object is not 0,0,0. Objects do not need the :m suffix. Adding the :m suffix will crash the game, because it will be exported with that name into the PKG file.
 
