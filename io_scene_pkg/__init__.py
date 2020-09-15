@@ -25,6 +25,8 @@ import io_scene_pkg.variant_ui as variant_ui
 import io_scene_pkg.angel_scenedata as angel_scenedata
 import io_scene_pkg.bl_preferences as bl_preferences
 import io_scene_pkg.import_tex as import_tex
+import io_scene_pkg.material_helper_ui as material_helper_ui
+
 
 from bpy.props import (
         BoolProperty,
@@ -128,6 +130,7 @@ def register():
     angel_scenedata.register()
     variant_ui.register()
     import_tex.register()
+    material_helper_ui.register()
     
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -146,6 +149,7 @@ def unregister():
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
+    material_helper_ui.unregister()
     import_tex.unregister()
     variant_ui.unregister()
     angel_scenedata.unregister()
