@@ -37,9 +37,9 @@ vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
                 "SHADOW_H", "SHADOW_M", "SHADOW_L", "SHADOW_VL",
                 "HLIGHT_H", "HLIGHT_M", "HLIGHT_L", "HLIGHT_VL",
                 "TLIGHT_H", "TLIGHT_M", "TLIGHT_L", "TLIGHT_VL",
+                "RLIGHT_H", "RLIGHT_M", "RLIGHT_L", "RLIGHT_VL",
                 "SLIGHT0_H", "SLIGHT0_M", "SLIGHT0_L", "SLIGHT0_VL",
                 "SLIGHT1_H", "SLIGHT1_M", "SLIGHT1_L", "SLIGHT1_VL",
-                "RLIGHT_H", "RLIGHT_M", "RLIGHT_L", "RLIGHT_VL",
                 "BLIGHT_H", "BLIGHT_M", "BLIGHT_L", "BLIGHT_VL",
                 "BODYDAMAGE_H", "BODYDAMAGE_M", "BODYDAMAGE_L", "BODYDAMAGE_VL",
                 "SIREN0_H", "SIREN0_M", "SIREN0_L", "SIREN0_VL",
@@ -158,7 +158,7 @@ def reorder_objects(lst, pred):
 def export_xrefs(file, selected_only):
     # build list of xrefs to export
     xref_objects = []
-    for obj in bpy.data.objects:
+    for obj in bpy.context.scene.objects:
         if obj.name.lower().startswith("xref:"):
             if (selected_only and obj in bpy.context.selected_objects) or not selected_only:
                 xref_objects.append(obj)
@@ -257,7 +257,7 @@ def export_shaders(file, context, type="byte"):
 def export_geometry(file, meshlist, options):
     for obj in meshlist:
         # write FILE header for mesh name
-        bin.write_file_header(file, export_helper.get_undupe_name(obj.name))
+        bin.write_file_header(file, helper.get_undupe_name(obj.name))
         file_data_start_offset = file.tell()
         
         # don't multiply vertices for objects requring a matrix3x4 export
@@ -394,7 +394,7 @@ def save_pkg(filepath,
     if selection_only:
       export_objects = bpy.context.selected_objects
     else:
-      export_objects = bpy.data.objects
+      export_objects = bpy.context.scene.objects
     
       
     # first we need to figure out the export type before anything

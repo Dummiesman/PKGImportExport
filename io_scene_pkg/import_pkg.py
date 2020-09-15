@@ -45,11 +45,9 @@ def read_shaders_file(file, length, offset):
         shader = base_variant[shader_num]
         
         mtl = bpy.data.materials.get(str(shader_num))
-        mtlname = "pkgmaterial_" + str(shader_num)
         if mtl is not None:
             import_helper.populate_material(mtl, shader, pkg_path)
             base_material_set.append(mtl)
-            mtl.name = mtlname
         else:
             base_material_set.append(None) # SHOULD NOT HAPPEN!
     
@@ -85,6 +83,7 @@ def read_shaders_file(file, length, offset):
             
             # adjust the cloned version
             import_helper.populate_material(variant_material.material, shader, pkg_path)
+            variant_material.material.name = helper.get_undupe_name(variant_material.material.name) + "_VARIANT" + str(variant_num)
             
     
     # skip to the end of this FILE
