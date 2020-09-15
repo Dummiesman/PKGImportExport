@@ -123,7 +123,11 @@ def write_float3(file, data):
 
     
 def write_color4d(file, color, alpha=1):
-    file.write(struct.pack('BBBB', int(color[0] * 255), int(color[1] * 255), int(color[2] * 255), int(alpha * 255)))
+    r = min(255, int(color[0] * 255))
+    g = min(255, int(color[1] * 255))
+    b = min(255, int(color[2] * 255))
+    a = min(255, int(alpha * 255))
+    file.write(struct.pack('BBBB', r, g, b, a))
 
 
 def write_color4f(file, color, alpha=1):
