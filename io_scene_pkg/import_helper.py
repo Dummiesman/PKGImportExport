@@ -11,6 +11,7 @@ import bpy, mathutils
 import os, struct
 import os.path as path
 
+import io_scene_pkg.common_helpers as helper
 import io_scene_pkg.binary_helper as bin
       
 from io_scene_pkg.tex_file import TEXFile
@@ -25,20 +26,26 @@ def get_object_name_without_lod_suffix(meshname):
 
 def find_matrix3x4(meshname, pkg_path):
     """search for *.mtx and load if found"""
+    pkg_name = os.path.basename(pkg_path)[:-4]
+    search_path = os.path.dirname(pkg_path)
     mesh_name_parsed = get_object_name_without_lod_suffix(meshname)
-    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
     
-    if path.isfile(find_path):
+    find_path = helper.find_file_with_game_fallback(pkg_name + "_" + mesh_name_parsed + ".mtx", search_path, "geometry", ignore_subdir_on_search_path=True)
+    
+    if find_path is not None:
         mtxfile = open(find_path, 'rb')
         return bin.read_matrix3x4(mtxfile)
     return None
     
 def find_matrix(meshname, pkg_path):
     """search for *.mtx and load if found"""
+    pkg_name = os.path.basename(pkg_path)[:-4]
+    search_path = os.path.dirname(pkg_path)
     mesh_name_parsed = get_object_name_without_lod_suffix(meshname)
-    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
     
-    if path.isfile(find_path):
+    find_path = helper.find_file_with_game_fallback(pkg_name + "_" + mesh_name_parsed + ".mtx", search_path, "geometry", ignore_subdir_on_search_path=True)
+    
+    if find_path is not None:
         mtxfile = open(find_path, 'rb')
         mtx_info = struct.unpack('ffffffffffff', mtxfile.read(48))
         
@@ -46,54 +53,36 @@ def find_matrix(meshname, pkg_path):
         mtx_max = (mtx_info[3], mtx_info[5] * -1, mtx_info[4])
         pivot =  (mtx_info[6], mtx_info[8] * -1, mtx_info[7])
         origin = (mtx_info[9], mtx_info[11] * -1, mtx_info[10])
-       
+        
+        mtxfile.close()
+        
         return (True, mtx_min, mtx_max, pivot, origin)
     return (False, None, None, None, None)
     
-def __try_load_texture(tex_name, search_path):
-    """look for tex, tga, bmp, or png texture, and load if found"""
-    texturepath = path.abspath(path.join(search_path, "texture\\" + tex_name))
-    find_path = texturepath + ".tex"
-    if os.path.isfile(find_path):
-        tf = TEXFile(find_path)
-        tf_img = tf.to_blender_image(tex_name)
-        return tf_img
-    find_path = texturepath + ".tga"
-    if os.path.isfile(find_path):
-        img = bpy.data.images.load(find_path)
-        return img
-    find_path = texturepath + ".bmp"
-    if os.path.isfile(find_path):
-        img = bpy.data.images.load(find_path)
-        return img
-    find_path = texturepath + ".png"
-    if os.path.isfile(find_path):
-        img = bpy.data.images.load(find_path)
-        return img
-    return None
-    
-def try_load_texture(context, tex_name, path):
+def try_load_texture(tex_name, search_path):
     existing_image = bpy.data.images.get(tex_name)
     if existing_image is not None:
         return existing_image
-        
-    # try to load with the initial path
-    tex = __try_load_texture(tex_name, path)
-    if tex is not None:
-        return tex
-        
-    # fallback to game path if applicable!
-    if context is None:
-        return None
-        
-    preferences = context.preferences
-    addon_prefs = preferences.addons[__package__].preferences
     
-    if addon_prefs.use_gamepath:
-        tex = __try_load_texture(tex_name, addon_prefs.gamepath)
-    return tex
-        
+    print("try_load_texture(" + tex_name + ", " + search_path + ")")
+
+    find_file = tex_name + ".tex"
+    found_file = helper.find_file_with_game_fallback(find_file, search_path, "texture")
+    if found_file is not None:
+        tf = TEXFile(found_file)
+        tf_img = tf.to_blender_image(tex_name)
+        return tf_img
     
+    standard_extensions = (".tga", ".bmp", ".png")
+    for ext in standard_extensions:
+        find_file = tex_name + ext
+        found_file = helper.find_file_with_game_fallback(find_file, search_path, "texture")
+        if found_file is not None:
+            img = bpy.data.images.load(found_file)
+            return img
+        
+    return None
+
 
 def check_degenerate(i1, i2, i3):
     if i1 == i2 or i1 == i3 or i2 == i3:
@@ -162,8 +151,12 @@ def read_vertex_data(file, FVF_FLAGS, compressed):
           
     return (vnorm, vuv, vcolor)
 
-def populate_material(context, mtl, shader, pkg_path):
+def populate_material(mtl, shader, pkg_path):
     """ Initializes a material """
+    # get addon settings
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[__package__].preferences    
+    
     # get tex name
     texture_name = "age:notexture" if shader.name is None else shader.name
     
@@ -189,15 +182,26 @@ def populate_material(context, mtl, shader, pkg_path):
     # look for a texture
     tex_result = None
     tex_image_node = None
+    is_substituted_tex = False
     if shader.name is not None:
-        tex_result = try_load_texture(context, texture_name, path.join(os.path.dirname(pkg_path), "../"))
-    
+        tex_result = try_load_texture(texture_name, path.abspath(path.join(os.path.dirname(pkg_path), "..")))
+        
+        # texture substitution
+        if tex_result is None and addon_prefs.substitute_textures:
+            tex_result = helper.make_placeholder_texture(texture_name)
+            is_substituted_tex = True
+
+    # set up diffuse
     if tex_result is not None:
         tex_depth = tex_result.depth
         tex_image_node = mtl.node_tree.nodes.new('ShaderNodeTexImage')
         tex_image_node.image = tex_result
         tex_image_node.location = mathutils.Vector((-640.0, 20.0))
         
+        # the substitution texture is very low res. Don't filter it.
+        if is_substituted_tex:
+            tex_image_node.interpolation = "Closest"
+            
         blend_node = mtl.node_tree.nodes.new('ShaderNodeMixRGB')
         blend_node.inputs['Color2'].default_value = shader.diffuse_color
         blend_node.inputs['Fac'].default_value = 1.0

@@ -18,17 +18,24 @@ class PkgPreferences(bpy.types.AddonPreferences):
 
     gamepath: bpy.props.StringProperty(
         name="Game Path",
-        description="Choose the game path, used for substituting missing textures etc. (Game data must be unpacked)"
+        description="Choose the game path, used to fallback to default textures etc. (Game data must be unpacked)"
     )
 
     use_gamepath: bpy.props.BoolProperty(
         name="Use Game Path", 
         default = True
     )
+    
+    substitute_textures: bpy.props.BoolProperty(
+        name="Substitute Textures", 
+        description = "Replace missing textures with a pink and black checkerboard pattern. This will keep texture assignments intact in case a texture is missing.",
+        default = True
+    )
 
   
     def draw(self, context):
         layout = self.layout
+        layout.prop(self, "substitute_textures")
         layout.prop(self, "use_gamepath")
         layout.prop(self, "gamepath")
 

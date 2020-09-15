@@ -24,7 +24,7 @@ pkg_path = None
 ######################################################
 # IMPORT MAIN FILES
 ######################################################
-def read_shaders_file(file, length, offset, context):
+def read_shaders_file(file, length, offset):
     # get custom stuff
     scene = bpy.context.scene
     angel = scene.angel
@@ -47,7 +47,7 @@ def read_shaders_file(file, length, offset, context):
         mtl = bpy.data.materials.get(str(shader_num))
         mtlname = "pkgmaterial_" + str(shader_num)
         if mtl is not None:
-            import_helper.populate_material(context, mtl, shader, pkg_path)
+            import_helper.populate_material(mtl, shader, pkg_path)
             base_material_set.append(mtl)
             mtl.name = mtlname
         else:
@@ -84,7 +84,7 @@ def read_shaders_file(file, length, offset, context):
             variant_material = tool_variant.add_material(base_mtl)
             
             # adjust the cloned version
-            import_helper.populate_material(context, variant_material.material, shader, pkg_path)
+            import_helper.populate_material(variant_material.material, shader, pkg_path)
             
     
     # skip to the end of this FILE
@@ -263,7 +263,8 @@ def read_geometry_file(file, meshname):
       if helper.is_matrix_object(ob):
         # some objects actually use MTX as a matrix.
         mtx = import_helper.find_matrix3x4(meshname, pkg_path)
-        ob.matrix_world = mtx
+        if mtx is not None:
+            ob.matrix_world = mtx
       else:
         # others use it as min,max,pivot,origin
         found, min, max, pivot, origin = import_helper.find_matrix(meshname, pkg_path)
@@ -329,7 +330,7 @@ def load_pkg(filepath,
         print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
         if file_name == "shaders":
             # load shaders file
-            read_shaders_file(file, file_length, file.tell(), context)
+            read_shaders_file(file, file_length, file.tell())
         elif file_name == "offset":
             # skip over this, seems it's meta
             if pkg_version_id == 3:
