@@ -22,7 +22,7 @@ class TEXType(IntEnum):
     RGB8888 = 18
     
 class TEXFile:
-    def to_blender_image(self, name= 'tex_image'):
+    def to_blender_image(self, name= 'tex_image', pack = True):
         im = bpy.data.images.new(name=name, width=self.width, height=self.height, alpha=self.is_alpha_format())
         pixels = list(im.pixels)
         
@@ -39,6 +39,10 @@ class TEXFile:
     
         im.pixels = pixels[:]
         im.update()
+        
+        if pack:
+            im.pack()
+            
         return im
         
     def __read_palette(self, file, color_count):
