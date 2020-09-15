@@ -88,11 +88,11 @@ def create_shader_from_material(mat):
             if mix_node.type == "MIX_RGB":
                 for inp in mix_node.inputs:
                     if len(inp.links) == 0 and inp.name != "Fac":
-                        shader.emission_color = [inp.default_value[0], inp.default_value[1], inp.default_value[2], 1.0]
+                        shader.emissive_color = [inp.default_value[0], inp.default_value[1], inp.default_value[2], 1.0]
             else:
                 print("Unsupported diffuse link type. Using default value for diffuse_color.")
         else:
-            shader.emission_color = [emission_input.default_value[0], emission_input.default_value[1], emission_input.default_value[2], 1.0]
+            shader.emissive_color = [emission_input.default_value[0], emission_input.default_value[1], emission_input.default_value[2], 1.0]
         
     # force alpha if materials blend mode isn't set right
     if mat.blend_method == 'OPAQUE':
