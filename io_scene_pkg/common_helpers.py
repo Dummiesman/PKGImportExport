@@ -56,9 +56,15 @@ def make_placeholder_texture(name):
     im.pixels = pixels[:]
     im.update()
     return im
-        
+
+
 def get_raw_object_name(meshname):
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
+    
+    
+def get_undupe_name(name):
+    nidx = name.find('.')
+    return name[:nidx] if nidx != -1 else name
 
 
 def is_matrix_object(obj):

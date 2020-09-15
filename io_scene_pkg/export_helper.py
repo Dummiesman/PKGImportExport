@@ -14,10 +14,6 @@ from io_scene_pkg.shader_set import (ShaderSet, Shader)
 import io_scene_pkg.common_helpers as helper
 import io_scene_pkg.binary_helper as bin
 
-def get_undupe_name(name):
-    nidx = name.find('.')
-    return name[:nidx] if nidx != -1 else name
-    
 def is_mat_shadeless(mat):
     for node in mat.node_tree.nodes:
         if node.type == "EMISSION":
@@ -54,11 +50,11 @@ def create_shader_from_material(mat):
                     image_node = inp.links[0].from_node
                     if image_node.type == "TEX_IMAGE":
                         if image_node.image is not None:
-                            shader.name = get_undupe_name(image_node.image.name)
+                            shader.name = helper.get_undupe_name(image_node.image.name)
         elif color_input_node.type == "TEX_IMAGE":
             # we directly have a texture input
             if color_input_node.image is not None:
-                shader.name = get_undupe_name(color_input_node.image.name)
+                shader.name = helper.get_undupe_name(color_input_node.image.name)
         else:
             print("Unsupported diffuse link type. Using default value for diffuse_color.")
     else:
