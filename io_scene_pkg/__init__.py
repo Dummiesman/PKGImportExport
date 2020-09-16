@@ -51,6 +51,12 @@ class ImportPKG(bpy.types.Operator, ImportHelper):
     filename_ext = ".pkg"
     filter_glob: StringProperty(default="*.pkg", options={'HIDDEN'})
 
+    import_variants: BoolProperty(
+        name="Import Variants",
+        description="Import variants from this file. Will clear existing variant data in the scene.",
+        default=True,
+        )
+        
     def execute(self, context):
         from . import import_pkg
         keywords = self.as_keywords(ignore=("axis_forward",

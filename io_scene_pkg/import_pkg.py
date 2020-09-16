@@ -24,13 +24,10 @@ pkg_path = None
 ######################################################
 # IMPORT MAIN FILES
 ######################################################
-def read_shaders_file(file, length, offset):
+def read_shaders_file(file, length, offset, import_variants):
     # get custom stuff
     scene = bpy.context.scene
     angel = scene.angel
-    
-    # clear existing variant stuff
-    angel.clear()
     
     # read shader set
     shader_set = ShaderSet(file)
@@ -53,6 +50,13 @@ def read_shaders_file(file, length, offset):
             base_material_set.append(mtl)
         else:
             base_material_set.append(None) # SHOULD NOT HAPPEN!
+    
+    # don't set up variants if the import flag isn't set 
+    if not import_variants:
+        return
+        
+    # clear existing variant stuff
+    angel.clear()
     
     # find what materials are equal across the board
     # this will give us the ability of quickly checking if variants are unique
@@ -283,7 +287,7 @@ def read_geometry_file(file, meshname):
 ######################################################
 def load_pkg(filepath,
              context,
-             from_self = False):
+             import_variants=True):
     # set the PKG path, used for finding textures
     global pkg_path
     pkg_path = filepath
@@ -335,7 +339,7 @@ def load_pkg(filepath,
         print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
         if file_name == "shaders":
             # load shaders file
-            read_shaders_file(file, file_length, file.tell())
+            read_shaders_file(file, file_length, file.tell(), import_variants)
         elif file_name == "offset":
             # skip over this, seems it's meta
             if pkg_version_id == 3:
@@ -356,10 +360,12 @@ def load_pkg(filepath,
 def load(operator,
          context,
          filepath="",
+         import_variants=True
          ):
          
     load_pkg(filepath,
              context,
+             import_variants
              )
 
     return {'FINISHED'}

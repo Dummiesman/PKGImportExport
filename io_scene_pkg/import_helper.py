@@ -65,8 +65,6 @@ def try_load_texture(tex_name, search_path):
     if existing_image is not None:
         return existing_image
     
-    print("try_load_texture(" + tex_name + ", " + search_path + ")")
-
     find_file = tex_name + ".tex"
     found_file = helper.find_file_with_game_fallback(find_file, search_path, "texture")
     if found_file is not None:
