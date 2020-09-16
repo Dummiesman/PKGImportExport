@@ -26,8 +26,9 @@ from bpy.props import (IntProperty,
 # -------------------------------------------------------------------
 #   Operators
 # -------------------------------------------------------------------
-        
+
 class AddVariantOperator(Operator):
+    """Adds a new, blank variant"""
     bl_idname = "angel.add_variant"
     bl_label = "Add Variant"
     bl_options = {'REGISTER', 'UNDO'}
@@ -39,15 +40,30 @@ class AddVariantOperator(Operator):
         is_first_variant = len(angel.variants) == 0
         variant = angel.variants.add()
         
-        # clone from first
-        if not is_first_variant:
-            variant.clone_from(angel.get_selected_variant())
-        
         angel.selected_variant = len(angel.variants) - 1
+        
+        return {'FINISHED'}
+        
+class CloneVariantOperator(Operator):
+    """Duplicates the currently selected variant"""
+    bl_idname = "angel.clone_variant"
+    bl_label = "Clone Variant"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        scene = context.scene
+        angel = scene.angel
+        
+        current_variant = angel.get_selected_variant()
+        if current_variant is not None:
+            variant = angel.variants.add()
+            variant.clone_from(current_variant)
+            angel.selected_variant = len(angel.variants) - 1
         
         return {'FINISHED'}
 
 class DeleteVariantOperator(Operator):
+    """Deletes the currently selected variant"""
     bl_idname = "angel.delete_variant"
     bl_label = "Delete Variant"
     bl_options = {'REGISTER', 'UNDO'}
@@ -70,7 +86,7 @@ class DeleteVariantOperator(Operator):
         return {'FINISHED'}
         
 class DeleteVariantConfirmOperator(Operator):
-    """Really?"""
+    """Deletes the currently selected variant"""
     bl_idname = "angel.delete_variant_confirm"
     bl_label = "Do you really want to delete this variant?"
     bl_options = {'INTERNAL'}
@@ -85,8 +101,28 @@ class DeleteVariantConfirmOperator(Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_confirm(self, event)
+ 
+class CloneMaterialFromVariantOperator(Operator):
+    """Clone this material from the variant and put it in the shared pool"""
+    bl_idname = "angel.clone_material_from_variant"
+    bl_label = "Clone Material From Variant"
+    bl_options = {'INTERNAL','REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        scene = context.scene
+        angel = scene.angel
+        variant = angel.get_selected_variant()
         
+        if variant.material_index < len(variant.materials):
+            mtl_to_clone = variant.materials[variant.material_index].material
+            new_material = mtl_to_clone.copy()
+            new_material.cloned_from = None # orphan this, otherwise we break everything
+            
+
+        return {'FINISHED'}
+
 class RemoveMaterialFromVariantOperator(Operator):
+    """Remove this material from the variant, reverting to the shared one"""
     bl_idname = "angel.remove_material_from_variant"
     bl_label = "Remove Material From Variant"
     bl_options = {'INTERNAL','REGISTER', 'UNDO'}
@@ -107,6 +143,7 @@ class RemoveMaterialFromVariantOperator(Operator):
         return {'FINISHED'}
         
 class AddMaterialToVariantOperator(Operator):
+    """Create an instance of this material specific to this variant"""
     bl_idname = "angel.add_material_to_variant"
     bl_label = "Add Material To Variant"
     bl_options = {'INTERNAL','REGISTER', 'UNDO'}
@@ -127,6 +164,7 @@ class AddMaterialToVariantOperator(Operator):
 # -------------------------------------------------------------------
 #   Drawing
 # -------------------------------------------------------------------
+
 class ANGEL_UL_materials(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         mat = item.material
@@ -208,11 +246,19 @@ class ANGEL_PT_AngelPanel(Panel):
         layout.label(text="Variant Editor")
         layout.separator()
         
+        # draw +/copy/- row
         row = layout.row()
-        row.label(text=str(len(angel.variants)) + " variants")
-        row.operator("angel.delete_variant_confirm", text= "-")
-        row.operator("angel.add_variant", text= "+")
+        c1 = row.column()
+        c2 = row.column()
+        c2row = c2.row(align=True)
         
+        c1.label(text=str(len(angel.variants)) + " variants")
+        
+        c2row.operator("angel.delete_variant_confirm", text= "", icon='REMOVE')
+        c2row.operator("angel.clone_variant", text= "", icon='DUPLICATE')
+        c2row.operator("angel.add_variant", text= "", icon='ADD')
+        
+        # the rest
         layout.prop(angel, "selected_variant")
         selected_variant = angel.selected_variant
         
@@ -231,7 +277,8 @@ class ANGEL_PT_AngelPanel(Panel):
             
             # draw remove from button
             row = layout.row()
-            row.operator("angel.remove_material_from_variant")
+            row.operator("angel.remove_material_from_variant", text="Remove")
+            row.operator("angel.clone_material_from_variant", text="Clone")
             
             # draw unused list
             layout.label(text="Materials Not In Variant (Shared)")
@@ -259,9 +306,11 @@ class ANGEL_PT_AngelPanel(Panel):
 
 classes = (
     AddVariantOperator,
+    CloneVariantOperator,
     DeleteVariantOperator,
     DeleteVariantConfirmOperator,
     AddMaterialToVariantOperator,
+    CloneMaterialFromVariantOperator,
     RemoveMaterialFromVariantOperator,
     ANGEL_PT_AngelPanel,
     ANGEL_UL_materials,
