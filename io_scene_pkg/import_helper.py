@@ -58,7 +58,8 @@ def find_matrix(meshname, pkg_path):
         
         return (True, mtx_min, mtx_max, pivot, origin)
     return (False, None, None, None, None)
-    
+ 
+ 
 def try_load_texture(tex_name, search_path):
     existing_image = bpy.data.images.get(tex_name)
     if existing_image is not None:
@@ -70,8 +71,11 @@ def try_load_texture(tex_name, search_path):
     found_file = helper.find_file_with_game_fallback(find_file, search_path, "texture")
     if found_file is not None:
         tf = TEXFile(found_file)
-        tf_img = tf.to_blender_image(tex_name)
-        return tf_img
+        if tf.is_valid():
+            tf_img = tf.to_blender_image(tex_name)
+            return tf_img
+        else:
+            print("Invalid TEX file: " + found_file)
     
     standard_extensions = (".tga", ".bmp", ".png")
     for ext in standard_extensions:

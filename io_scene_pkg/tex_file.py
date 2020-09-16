@@ -65,7 +65,7 @@ class TEXFile:
         return self.format != TEXType.P8 and self.format != TEXType.P4 and self.format != TEXType.RGB888
     
     def is_valid(self):
-        return self.width != 0 and self.height != 0
+        return self.width != 0 and self.height != 0 and len(self.mipmaps) > 0
         
     def get_stride(self):
         strides = (0, 
