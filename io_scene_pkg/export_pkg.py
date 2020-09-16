@@ -175,7 +175,7 @@ def export_xrefs(file, selected_only):
             bin.write_matrix3x4(file, obj.matrix_basis)
            
             # write xref name
-            xref_name = export_helper.get_undupe_name(obj.name[5:]) + "\x00max"
+            xref_name = helper.get_undupe_name(obj.name[5:]) + "\x00max"
             null_length = 32 - len(xref_name)
             
             file.write(bytes(xref_name, 'utf-8'))
