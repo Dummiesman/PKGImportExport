@@ -29,6 +29,9 @@ def read_shaders_file(file, length, offset):
     scene = bpy.context.scene
     angel = scene.angel
     
+    # clear existing variant stuff
+    angel.clear()
+    
     # read shader set
     shader_set = ShaderSet(file)
     
@@ -85,6 +88,9 @@ def read_shaders_file(file, length, offset):
             import_helper.populate_material(variant_material.material, shader, pkg_path)
             variant_material.material.name = helper.get_undupe_name(variant_material.material.name) + "_VARIANT" + str(variant_num)
             
+    # apply it 
+    angel.apply_to_scene()
+    angel.selected_variant = 0
     
     # skip to the end of this FILE
     file.seek(length - (file.tell() - offset), 1)

@@ -133,6 +133,9 @@ class AngelSceneData(PropertyGroup):
     # index used for "not in variant" list
     material_pool_index: IntProperty()     
     
+    def clear(self):
+        self.variants.clear()
+
     def apply_to_scene(self):
         variant = self.get_selected_variant()
         if variant is not None:
