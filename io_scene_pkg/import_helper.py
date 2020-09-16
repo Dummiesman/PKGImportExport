@@ -236,13 +236,14 @@ def populate_material(mtl, shader, pkg_path):
     if tex_image_node is not None:
         blend_node = mtl.node_tree.nodes.new('ShaderNodeMath')
         blend_node.inputs[0].default_value = mtl_alpha
-        blend_node.inputs[1].default_value = 1.0
         blend_node.operation = 'MULTIPLY'
         blend_node.label = "Alpha"
         blend_node.location = mathutils.Vector((-260.0, -200.0))
         
         mtl.node_tree.links.new(blend_node.inputs[1], tex_image_node.outputs['Alpha'])
         mtl.node_tree.links.new(bsdf.inputs['Alpha'], blend_node.outputs[0])
+    else:
+        bsdf.inputs['Alpha'].default_value = mtl_alpha
         
     mtl.name = texture_name
 
