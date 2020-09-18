@@ -47,9 +47,26 @@ class ImportTEX(bpy.types.Operator, ImportHelper):
         
         return {'FINISHED'}
 
+class ImportTEXMenu(bpy.types.Menu):
+    bl_idname = "ANGEL_MT_import_tex_menu"
+    bl_label = "Angel Tools"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("import_texture.tex")
+        
+    def menu_draw(self, context):
+        self.layout.menu("ANGEL_MT_import_tex_menu")
+
+
 def register():
+    bpy.utils.register_class(ImportTEXMenu)
     bpy.utils.register_class(ImportTEX)
+    bpy.types.TOPBAR_MT_editor_menus.append(ImportTEXMenu.menu_draw)
 
 
 def unregister():
+    bpy.types.TOPBAR_MT_editor_menus.remove(ImportTEXMenu.menu_draw)
     bpy.utils.unregister_class(ImportTEX)
+    bpy.utils.unregister_class(ImportTEXMenu)
