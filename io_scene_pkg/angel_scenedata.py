@@ -69,7 +69,9 @@ class Variant(PropertyGroup):
         variant_material = self.materials.add()
         
         material_copy = material.copy()
-        material_copy.name = material.name + "_variant"
+        
+        if not material.name.lower().endswith("_variant"):
+            material_copy.name = material.name + "_variant"
         
         # if we're cloning a clone, use it's cloned_from
         if material.cloned_from is not None:
