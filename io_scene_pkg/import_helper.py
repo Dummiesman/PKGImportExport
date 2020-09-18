@@ -228,7 +228,7 @@ def populate_material(mtl, shader, pkg_path):
      
     # have alpha?
     if mtl_alpha < 1 or tex_depth == 32:
-        mtl.blend_method = 'BLEND'
+        mtl.blend_method = 'HASHED' if addon_prefs.use_alpha_hash else 'BLEND'
         
     # assign transparent channel on BSDF
     if tex_image_node is not None:

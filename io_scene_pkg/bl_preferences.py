@@ -31,11 +31,17 @@ class PkgPreferences(bpy.types.AddonPreferences):
         description = "Replace missing textures with a pink and black checkerboard pattern. This will keep texture assignments intact in case a texture is missing.",
         default = True
     )
-
+    
+    use_alpha_hash: bpy.props.BoolProperty(
+        name="Prefer Alpha Hash For Blend Mode", 
+        description = "Use alpha hash instead alpha blend on transparent materials. May make transparency appear incorrectly, but solves objects rendering atop each other.",
+        default = False
+    )
   
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "substitute_textures")
+        layout.prop(self, "use_alpha_hash")
         layout.prop(self, "use_gamepath")
         layout.prop(self, "gamepath")
 
