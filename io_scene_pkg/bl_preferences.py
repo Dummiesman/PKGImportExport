@@ -28,13 +28,13 @@ class PkgPreferences(bpy.types.AddonPreferences):
     
     substitute_textures: bpy.props.BoolProperty(
         name="Substitute Textures", 
-        description = "Replace missing textures with a pink and black checkerboard pattern. This will keep texture assignments intact in case a texture is missing.",
+        description = "Replace missing textures with a pink and black checkerboard pattern. This will keep texture assignments intact in case a texture is missing",
         default = True
     )
     
     use_alpha_hash: bpy.props.BoolProperty(
-        name="Prefer Alpha Hash For Blend Mode", 
-        description = "Use alpha hash instead alpha blend on transparent materials. May make transparency appear incorrectly, but solves objects rendering atop each other.",
+        name="Prefer Alpha Hash for Blend Mode", 
+        description = "Use alpha hash instead alpha blend on transparent materials. May make transparency appear incorrectly, but solves objects rendering atop each other",
         default = False
     )
   
