@@ -10,6 +10,7 @@
 import bpy, struct, mathutils
 from bpy_extras.io_utils import axis_conversion
 import math
+import io_scene_pkg.common_helpers as helper
 
 ########
 # READ #
@@ -71,13 +72,13 @@ def read_matrix3x4(file):
     
     mtx_convert = axis_conversion(from_forward='-Z', 
         from_up='Y',
-        to_forward='Y',
+        to_forward='-Y',
         to_up='Z').to_4x4()
     
     mtx = mtx_convert @ mtx
-
-    mat_rot = mathutils.Matrix.Rotation(math.radians(-90.0), 4, 'X')
-    mtx @= mat_rot
+    
+    mat_rot = mathutils.Matrix.Rotation(math.radians(90), 4, 'X') @ mathutils.Matrix.Rotation(math.radians(180), 4, 'Y')
+    mtx @= mat_rot 
     
     return mtx.to_4x4()
 
@@ -89,10 +90,10 @@ def write_matrix3x4(file, matrix):
     matrix = matrix.copy() 
     
     # convert coordinate space   
-    mat_rot = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'X')
+    mat_rot = mathutils.Matrix.Rotation(math.radians(-180.0), 4, 'Y') @ mathutils.Matrix.Rotation(math.radians(-90.0), 4, 'X')
     matrix @= mat_rot
     
-    mtx_convert = axis_conversion(from_forward='Y', 
+    mtx_convert = axis_conversion(from_forward='-Y', 
         from_up='Z',
         to_forward='-Z',
         to_up='Y').to_4x4()

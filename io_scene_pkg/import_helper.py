@@ -47,10 +47,10 @@ def find_matrix(meshname, pkg_path):
         mtxfile = open(find_path, 'rb')
         mtx_info = struct.unpack('ffffffffffff', mtxfile.read(48))
         
-        mtx_min = (mtx_info[0], mtx_info[2] * -1, mtx_info[1])
-        mtx_max = (mtx_info[3], mtx_info[5] * -1, mtx_info[4])
-        pivot =  (mtx_info[6], mtx_info[8] * -1, mtx_info[7])
-        origin = (mtx_info[9], mtx_info[11] * -1, mtx_info[10])
+        mtx_min = helper.convert_vecspace_to_blender((mtx_info[0], mtx_info[1], mtx_info[2]))
+        mtx_max = helper.convert_vecspace_to_blender((mtx_info[3], mtx_info[4], mtx_info[5]))
+        pivot =   helper.convert_vecspace_to_blender((mtx_info[6], mtx_info[7], mtx_info[8]))
+        origin =  helper.convert_vecspace_to_blender((mtx_info[9], mtx_info[10], mtx_info[11]))
         
         mtxfile.close()
         
@@ -161,8 +161,8 @@ def populate_material(mtl, shader, pkg_path):
         tex_result = helper.try_load_texture(texture_name, path.abspath(path.join(os.path.dirname(pkg_path), "..")))
         
         # debug
-        if tex_result is not None:
-            print("Texture:" + texture_name + ", Path:" + tex_result.filepath_raw)
+        #if tex_result is not None:
+        #    print("Texture:" + texture_name + ", Path:" + tex_result.filepath_raw)
             
         # texture substitution
         if tex_result is None and addon_prefs.substitute_textures:

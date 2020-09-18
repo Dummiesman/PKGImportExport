@@ -120,3 +120,9 @@ def is_matrix_object(obj):
             obj_name == "SHOCK2" or obj_name == "SHOCK3" or obj_name == "DRIVER" or obj_name == "ARM0" or
             obj_name == "ARM1" or obj_name == "ARM2" or obj_name == "ARM3" or obj_name == "SHAFT2" or
             obj_name == "SHAFT3" or obj_name == "ENGINE")
+
+def convert_vecspace_to_blender(vtx):
+    return (vtx[0] * -1, vtx[2], vtx[1])
+    
+def convert_vecspace_to_mm2(vtx):
+    return (vtx[0] * -1, vtx[2], vtx[1])

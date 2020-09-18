@@ -194,8 +194,8 @@ def read_geometry_file(file, meshname):
                 vnorm, vuv, vcolor = import_helper.read_vertex_data(file, FVF_FLAGS, FLAG_compact_strips)
                
                 # convert coordinate spaces
-                age_norm = (vnorm[0], vnorm[2] * -1, vnorm[1])
-                age_vert = (vpos[0], vpos[2] * -1, vpos[1])
+                age_norm = helper.convert_vecspace_to_blender(vnorm)
+                age_vert = helper.convert_vecspace_to_blender(vpos)
                 age_uv = (vuv[0], (vuv[1] * -1) + 1)
                 
                 # add to uvs and colors list

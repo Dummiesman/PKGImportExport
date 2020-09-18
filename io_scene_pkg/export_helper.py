@@ -182,22 +182,14 @@ def bounds(obj):
     o_details = collections.namedtuple('object_details', 'x y z')
     return o_details(**originals)
 
+
 def write_matrix_standard(object, file):
     bnds = bounds(object)
-    file.write(struct.pack('ffffffffffff', bnds.x.min,
-                                           bnds.z.min,
-                                           bnds.y.min * -1,
-                                           bnds.x.max,
-                                           bnds.z.max,
-                                           bnds.y.max * -1,
-                                           # export location twice :/
-                                           # since Blender seems to use that for Location and origin
-                                           object.location.x,
-                                           object.location.z,
-                                           object.location.y * -1,
-                                           object.location.x,
-                                           object.location.z,
-                                           object.location.y * -1))
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.min, bnds.y.min, bnds.z.min))))
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.max, bnds.y.max, bnds.z.max))))
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location))) # write this twice. one is pivot and one is origin
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location)))
+
                                            
 def write_matrix(meshname, object, pkg_path):
     """write a *.mtx file"""

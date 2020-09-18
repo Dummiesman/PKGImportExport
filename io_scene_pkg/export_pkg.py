@@ -337,9 +337,9 @@ def export_geometry(file, meshlist, options):
             for cv in range(len(cmtl_verts)):
                 export_vert = cmtl_verts[cv]
                 export_vert_location = ((obj.matrix_world @ export_vert.co) - obj.location) if premultiply_vertices else export_vert.co
-                bin.write_float3(file, (export_vert_location[0], export_vert_location[2], export_vert_location[1] * -1))
+                bin.write_float3(file, helper.convert_vecspace_to_mm2(export_vert_location))
                 if FVF_FLAGS.has_flag("D3DFVF_NORMAL"):
-                    bin.write_float3(file, (export_vert.normal[0], export_vert.normal[2], export_vert.normal[1] * -1))
+                    bin.write_float3(file, helper.convert_vecspace_to_mm2(export_vert.normal))
                 if FVF_FLAGS.has_flag("D3DFVF_DIFFUSE"):
                     bin.write_color4d(file, cmtl_cols[cv])
                 if FVF_FLAGS.has_flag("D3DFVF_SPECULAR"):
