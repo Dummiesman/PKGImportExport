@@ -9,6 +9,8 @@
 
 import bpy
 import textwrap 
+import os.path as path
+import io_scene_pkg.common_helpers as helper
 
 from bpy.types import (Panel,
                        Menu,
@@ -23,6 +25,61 @@ from bpy.props import (IntProperty,
                        CollectionProperty,
                        PointerProperty)
 
+# -------------------------------------------------------------------
+#   Dialogs
+# -------------------------------------------------------------------
+class CloneReplaceVariantDialog(Operator):
+    bl_idname = "angel.clone_replace_variant_dialog"
+    bl_label = "Clone Variant w/ Replacement"
+    
+    replace_str: StringProperty(name="Replace",
+                                default="")
+                                
+    with_str: StringProperty(name="With",
+                             default="")
+    
+    def execute(self, context):
+        scene = context.scene
+        angel = scene.angel
+        
+        # clone current variant
+        bpy.ops.angel.clone_variant()
+        
+        # now edit this clone
+        current_variant = angel.get_selected_variant()
+        
+        for vm in current_variant.materials:
+            # get material
+            material = vm.material
+            
+            # replace material name
+            material.name = material.name.replace(self.replace_str, self.with_str)
+            
+            # replace texture if applicable
+            for node in material.node_tree.nodes:
+                if node.type == "TEX_IMAGE":
+                    image = node.image
+                    if image is not None and len(image.filepath_raw) > 0 and image.source == 'FILE':
+                        full_path = bpy.path.abspath(image.filepath_raw)
+                        head, tail = path.split(full_path)
+                        tail_name, tail_ext = path.splitext(tail)
+                        
+                        # replace name
+                        tail_name = tail_name.replace(self.replace_str, self.with_str)
+                        
+                        # re-combine and reapply
+                        node.image = helper.load_texture_from_path(path.join(head, tail_name + tail_ext))
+
+        return {'FINISHED'}
+ 
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width = 300)
+ 
+    def draw(self, context):
+        self.layout.prop(self, "replace_str")
+        self.layout.prop(self, "with_str")
+ 
+ 
 # -------------------------------------------------------------------
 #   Operators
 # -------------------------------------------------------------------
@@ -44,6 +101,22 @@ class AddVariantOperator(Operator):
         
         return {'FINISHED'}
         
+class CloneReplaceVariantOperator(Operator):
+    """Duplicate a variant with a texture replacement input"""
+    bl_idname = "angel.clone_replace_variant"
+    bl_label = "Clone Variant w/ Replacement"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        scene = context.scene
+        angel = scene.angel
+        
+        current_variant = angel.get_selected_variant()
+        if current_variant is not None:
+            bpy.ops.angel.clone_replace_variant_dialog('INVOKE_DEFAULT')
+        
+        return {'FINISHED'}
+        
 class CloneVariantOperator(Operator):
     """Duplicates the currently selected variant"""
     bl_idname = "angel.clone_variant"
@@ -61,6 +134,7 @@ class CloneVariantOperator(Operator):
             angel.selected_variant = len(angel.variants) - 1
         
         return {'FINISHED'}
+
 
 class DeleteVariantOperator(Operator):
     """Deletes the currently selected variant"""
@@ -246,6 +320,10 @@ class ANGEL_PT_AngelPanel(Panel):
         layout.label(text="Variant Editor")
         layout.separator()
         
+        # selected variant 
+        layout.prop(angel, "selected_variant")
+        selected_variant = angel.selected_variant
+        
         # draw +/copy/- row
         row = layout.row()
         c1 = row.column()
@@ -258,9 +336,9 @@ class ANGEL_PT_AngelPanel(Panel):
         c2row.operator("angel.clone_variant", text= "", icon='DUPLICATE')
         c2row.operator("angel.add_variant", text= "", icon='ADD')
         
+        layout.operator("angel.clone_replace_variant")
+        
         # the rest
-        layout.prop(angel, "selected_variant")
-        selected_variant = angel.selected_variant
         
         layout.separator()
         if selected_variant >= len(angel.variants):
@@ -312,6 +390,8 @@ classes = (
     AddMaterialToVariantOperator,
     CloneMaterialFromVariantOperator,
     RemoveMaterialFromVariantOperator,
+    CloneReplaceVariantDialog,
+    CloneReplaceVariantOperator,
     ANGEL_PT_AngelPanel,
     ANGEL_UL_materials,
     ANGEL_UL_materials_unused

@@ -13,8 +13,6 @@ import os.path as path
 
 import io_scene_pkg.common_helpers as helper
 import io_scene_pkg.binary_helper as bin
-      
-from io_scene_pkg.tex_file import TEXFile
                        
 #######################
 ### Other Functions ###
@@ -60,32 +58,6 @@ def find_matrix(meshname, pkg_path):
     return (False, None, None, None, None)
  
  
-def try_load_texture(tex_name, search_path):
-    existing_image = bpy.data.images.get(tex_name)
-    if existing_image is not None:
-        return existing_image
-    
-    find_file = tex_name + ".tex"
-    found_file = helper.find_file_with_game_fallback(find_file, search_path, "texture")
-    if found_file is not None:
-        tf = TEXFile(found_file)
-        if tf.is_valid():
-            tf_img = tf.to_blender_image(tex_name)
-            return tf_img
-        else:
-            print("Invalid TEX file: " + found_file)
-    
-    standard_extensions = (".tga", ".bmp", ".png")
-    for ext in standard_extensions:
-        find_file = tex_name + ext
-        found_file = helper.find_file_with_game_fallback(find_file, search_path, "texture")
-        if found_file is not None:
-            img = bpy.data.images.load(found_file)
-            return img
-        
-    return None
-
-
 def check_degenerate(i1, i2, i3):
     if i1 == i2 or i1 == i3 or i2 == i3:
         return True
@@ -186,8 +158,12 @@ def populate_material(mtl, shader, pkg_path):
     tex_image_node = None
     is_substituted_tex = False
     if shader.name is not None:
-        tex_result = try_load_texture(texture_name, path.abspath(path.join(os.path.dirname(pkg_path), "..")))
+        tex_result = helper.try_load_texture(texture_name, path.abspath(path.join(os.path.dirname(pkg_path), "..")))
         
+        # debug
+        if tex_result is not None:
+            print("Texture:" + texture_name + ", Path:" + tex_result.filepath_raw)
+            
         # texture substitution
         if tex_result is None and addon_prefs.substitute_textures:
             tex_result = helper.make_placeholder_texture(texture_name)

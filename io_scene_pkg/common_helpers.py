@@ -11,6 +11,30 @@ import bpy
 import os, struct
 import os.path as path
 
+from io_scene_pkg.tex_file import TEXFile
+
+def make_placeholder_texture(name):
+    ptw = 2
+    pth = 2
+    
+    im = bpy.data.images.new(name=name, width=ptw, height=pth)
+    pixels = list(im.pixels)
+    
+    for y in range(pth):
+        for x in range(ptw):
+            is_magenta = x == y
+            pixel_color = (1, 0, 1, 1) if is_magenta else (0, 0, 0, 1)
+            b_pixel_index = 4 * ((y * ptw) + x)
+            
+            pixels[b_pixel_index] = pixel_color[0]
+            pixels[b_pixel_index+1] = pixel_color[1]
+            pixels[b_pixel_index+2] = pixel_color[2]
+            pixels[b_pixel_index+3] = pixel_color[3]
+
+    im.pixels = pixels[:]
+    im.update()
+    return im
+    
 def find_file_with_game_fallback(file, search_path, subfolder = None, ignore_subdir_on_search_path = False):
     # first search the search_path
     find_path = (path.abspath(path.join(search_path, file))
@@ -34,30 +58,53 @@ def find_file_with_game_fallback(file, search_path, subfolder = None, ignore_sub
 
     # wasn't found in game dir or search_path
     return None
+
+
+def load_texture_from_path(file_path, use_placeholder_if_missing=True):
+    # extract the filename for manual image format names
+    imgname=path.basename(file_path)
+    imgname=os.path.splitext(imgname)[0]
+    
+    if not path.isfile(file_path):
+        return make_placeholder_texture(imgname)
+    
+    if file_path.lower().endswith(".tex"):
+        tf = TEXFile(file_path)
+        if tf.is_valid():
+            tf_img = tf.to_blender_image(imgname)
+            tf_img.filepath_raw = file_path # set filepath manually for TEX stuff, since we make it ourself
+            return tf_img
+        else:
+            print("Invalid TEX file: " + file_path)
+    else:
+        img = bpy.data.images.load(file_path)
+        return img
         
-def make_placeholder_texture(name):
-    ptw = 2
-    pth = 2
+    return None    
+
     
-    im = bpy.data.images.new(name=name, width=ptw, height=pth)
-    pixels = list(im.pixels)
+def try_load_texture(tex_name, search_path):
+    existing_image = bpy.data.images.get(tex_name)
+    if existing_image is not None:
+        return existing_image
     
-    for y in range(pth):
-        for x in range(ptw):
-            is_magenta = x == y
-            pixel_color = (1, 0, 1, 1) if is_magenta else (0, 0, 0, 1)
-            b_pixel_index = 4 * ((y * ptw) + x)
-            
-            pixels[b_pixel_index] = pixel_color[0]
-            pixels[b_pixel_index+1] = pixel_color[1]
-            pixels[b_pixel_index+2] = pixel_color[2]
-            pixels[b_pixel_index+3] = pixel_color[3]
-
-    im.pixels = pixels[:]
-    im.update()
-    return im
-
-
+    find_file = tex_name + ".tex"
+    found_file = find_file_with_game_fallback(find_file, search_path, "texture")
+    if found_file is not None:
+        tf_img = load_texture_from_path(found_file)
+        if tf_img is not None:
+            return tf_img
+    
+    standard_extensions = (".tga", ".bmp", ".png")
+    for ext in standard_extensions:
+        find_file = tex_name + ext
+        found_file = find_file_with_game_fallback(find_file, search_path, "texture")
+        if found_file is not None:
+            return load_texture_from_path(found_file)
+        
+    return None
+ 
+ 
 def get_raw_object_name(meshname):
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
     
