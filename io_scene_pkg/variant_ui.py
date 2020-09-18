@@ -136,6 +136,38 @@ class CloneVariantOperator(Operator):
         return {'FINISHED'}
 
 
+class ShiftVariantDownOperator(Operator):
+    """Shift this variant down in the variant list"""
+    bl_idname = "angel.shift_variant_down"
+    bl_label = "Shift Variant Down"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        scene = context.scene
+        angel = scene.angel
+        
+        if angel.selected_variant > 0 and angel.get_selected_variant() is not None:
+            angel.variants.move(angel.selected_variant, angel.selected_variant - 1)
+            angel.selected_variant = angel.selected_variant - 1
+        
+        return {'FINISHED'}
+       
+class ShiftVariantUpOperator(Operator):
+    """Shift this variant up in the variant list"""
+    bl_idname = "angel.shift_variant_up"
+    bl_label = "Shift Variant Up"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        scene = context.scene
+        angel = scene.angel
+        
+        if angel.selected_variant < len(angel.variants) and angel.get_selected_variant() is not None:
+            angel.variants.move(angel.selected_variant, angel.selected_variant + 1)
+            angel.selected_variant = angel.selected_variant + 1
+        
+        return {'FINISHED'}
+        
 class DeleteVariantOperator(Operator):
     """Deletes the currently selected variant"""
     bl_idname = "angel.delete_variant"
@@ -327,14 +359,21 @@ class ANGEL_PT_AngelPanel(Panel):
         # draw +/copy/- row
         row = layout.row()
         c1 = row.column()
-        c2 = row.column()
-        c2row = c2.row(align=True)
-        
         c1.label(text=str(len(angel.variants)) + " variants")
         
-        c2row.operator("angel.delete_variant_confirm", text= "", icon='REMOVE')
-        c2row.operator("angel.clone_variant", text= "", icon='DUPLICATE')
-        c2row.operator("angel.add_variant", text= "", icon='ADD')
+        c2 = row.column()
+        c3 = row.column()
+        
+        c2row = c2.row(align=True)
+        c3row = c3.row(align=True)
+        
+        
+        c2row.operator("angel.shift_variant_down", text= "", icon='TRIA_LEFT')
+        c2row.operator("angel.shift_variant_up", text= "", icon='TRIA_RIGHT')
+        
+        c3row.operator("angel.delete_variant_confirm", text= "", icon='REMOVE')
+        c3row.operator("angel.clone_variant", text= "", icon='DUPLICATE')
+        c3row.operator("angel.add_variant", text= "", icon='ADD')
         
         layout.operator("angel.clone_replace_variant")
         
@@ -392,6 +431,8 @@ classes = (
     RemoveMaterialFromVariantOperator,
     CloneReplaceVariantDialog,
     CloneReplaceVariantOperator,
+    ShiftVariantDownOperator,
+    ShiftVariantUpOperator,
     ANGEL_PT_AngelPanel,
     ANGEL_UL_materials,
     ANGEL_UL_materials_unused
