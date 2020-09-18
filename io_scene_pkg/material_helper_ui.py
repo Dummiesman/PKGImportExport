@@ -57,6 +57,9 @@ class CreateMaterialSetupOperator(Operator):
             self.report({'ERROR'}, "This material has been modified. This operation only works on brand new materials.")
             return {'CANCELLED'}
             
+        # basics
+        material.use_backface_culling = True
+    
         # continuing on, we start making the node setup now
         bsdf = material.node_tree.nodes["Principled BSDF"]
         
