@@ -367,7 +367,7 @@ def export_geometry(file, meshlist, options):
 
 def export_misc_mtx():
     for mtx in misc_mtx_objects:
-        ob = bpy.data.objects[mtx]
+        ob = bpy.data.objects.get(mtx)
         if ob is not None:
             export_helper.write_matrix(ob.name, ob, pkg_path)
     
