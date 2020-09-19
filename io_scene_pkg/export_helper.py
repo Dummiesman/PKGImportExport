@@ -185,8 +185,8 @@ def bounds(obj):
 
 def write_matrix_standard(object, file):
     bnds = bounds(object)
-    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.min, bnds.y.min, bnds.z.min))))
-    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.max, bnds.y.max, bnds.z.max))))
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.min, bnds.y.min, bnds.z.min * -1)))) # have to do * -1 for some reason
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.max, bnds.y.max, bnds.z.max * -1)))) # have to do * -1 for some reason
     file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location))) # write this twice. one is pivot and one is origin
     file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location)))
 
