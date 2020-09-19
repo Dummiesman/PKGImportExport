@@ -24,6 +24,9 @@ pkg_path = None
 ######################################################
 # GLOBAL LISTS
 ######################################################
+
+# Misc MTX objects are objects that aren't part of PKG, but 
+# related/essential enough that we load them in for user editing.
 misc_mtx_objects = ["EXHAUST0", "EXHAUST1"]
 
 ######################################################
@@ -294,6 +297,7 @@ def import_misc_mtx():
         if found:
             ob = bpy.data.objects.new(mtx, None)
             ob.location = origin
+            ob.empty_display_size = 0.5
             ob.show_name = True
             scn.collection.objects.link(ob)
         

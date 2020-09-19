@@ -136,6 +136,8 @@ dne_list = ["BOUND", "BINARY_BOUND",
             "EXHAUST0_H", "EXHAUST0_M", "EXHAUST0_L", "EXHAUST0_VL",
             "EXHAUST1_H", "EXHAUST1_M", "EXHAUST1_L", "EXHAUST1_VL"]
 
+# Misc MTX objects are objects that aren't part of PKG, but 
+# related/essential enough that we load them in for user editing.
 misc_mtx_objects = ["EXHAUST0", "EXHAUST1"]
 
 ######################################################
