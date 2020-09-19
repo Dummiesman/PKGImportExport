@@ -136,6 +136,8 @@ dne_list = ["BOUND", "BINARY_BOUND",
             "EXHAUST0_H", "EXHAUST0_M", "EXHAUST0_L", "EXHAUST0_VL",
             "EXHAUST1_H", "EXHAUST1_M", "EXHAUST1_L", "EXHAUST1_VL"]
 
+misc_mtx_objects = ["EXHAUST0", "EXHAUST1"]
+
 ######################################################
 # EXPORT HELPERS
 ######################################################
@@ -363,6 +365,12 @@ def export_geometry(file, meshlist, options):
         file.seek(0, 2)
 
 
+def export_misc_mtx():
+    for mtx in misc_mtx_objects:
+        ob = bpy.data.objects[mtx]
+        if ob is not None:
+            export_helper.write_matrix(ob.name, ob, pkg_path)
+    
 ######################################################
 # EXPORT
 ######################################################
@@ -447,6 +455,8 @@ def save_pkg(filepath,
     export_xrefs(file, selection_only)
     print('\t[%.4f] exporting offset' % (time.clock() - time1))
     export_offset(file)
+    print('\t[%.4f] exporting misc mtx' % (time.clock() - time1))
+    export_misc_mtx()
     # end write pkg file
     print(" done in %.4f sec." % (time.clock() - time1))
     file.close()

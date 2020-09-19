@@ -22,6 +22,11 @@ import io_scene_pkg.common_helpers as helper
 pkg_path = None
 
 ######################################################
+# GLOBAL LISTS
+######################################################
+misc_mtx_objects = ["EXHAUST0", "EXHAUST1"]
+
+######################################################
 # IMPORT MAIN FILES
 ######################################################
 def read_shaders_file(file, length, offset, import_variants):
@@ -282,6 +287,16 @@ def read_geometry_file(file, meshname):
           
     return
 
+def import_misc_mtx():
+    scn = bpy.context.scene
+    for mtx in misc_mtx_objects:
+        found, min, max, pivot, origin = import_helper.find_matrix(mtx, pkg_path)
+        if found:
+            ob = bpy.data.objects.new(mtx, None)
+            ob.location = origin
+            ob.show_name = True
+            scn.collection.objects.link(ob)
+        
 ######################################################
 # IMPORT
 ######################################################
@@ -352,7 +367,11 @@ def load_pkg(filepath,
             # assume geometry
             read_geometry_file(file, file_name)
     # END READ PKG FILE DATA
-
+    
+    # READ MISC MTX
+    import_misc_mtx()
+    # END READ MISC MTX
+    
     print(" done in %.4f sec." % (time.clock() - time1))
     file.close()
 
