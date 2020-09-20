@@ -1,30 +1,26 @@
 Blender PKG Add-On
-Version 0.3
-August 7th 2016
+Version 1.0 RC2
+September 15th 2020
 
 Created by Dummiesman
 
 1.Requirements
-  The addon was created in Blender 2.77. If you have any issues with the addon in a previous Blender version, I will NOT provide support!!
+  The addon was created in Blender 2.83, and may not work in previous verions.
 
 2.Installation
-  Blender 32 Bit:
-    On 32 bit Blender installations, extract the downloaded ZIP file to
-    C:\Program Files (x86)\Blender Foundation\Blender\2.77\scripts\addon
+  - Open the Blender preferences menu, found under Edit->Preferences.
 
-  Blender 64 Bit:
-    On 64 bit Blender installations, extract the downloaded ZIP file to
-    C:\Program Files\Blender Foundation\Blender\2.77\scripts\addons
+  - Go to the add-ons tab.
 
-  After you extract the Add-on, it will NOT show up in your import/export list by default!
+  - Click the install button located on the top right corner.
 
-  After extracting the Add-on, start Blender. Once Blender is started, open up File->User Preferences, and navigate over to the Add-ons tab. Find "Import-Export: Midtown Madness 2 PKG Format", and enable it. Click "Save User Preferences" on the bottom of the dialog, and close the dialog.
-
-  Now you will be able to use the Add-on.
+  - Select the downloaded addon ZIP
+  
+  - Enable it, and enter your game data path
 
 3.Importing
   Textures
-    Textures with the format BMP,TGA,TEX will be imported. TEX is NOT supported.
+    Textures with the format BMP,TGA,TEX will be imported.
 
   MTX Files
     MTX files will automatically be imported if found
@@ -34,29 +30,22 @@ Created by Dummiesman
 
 4.Exporting
   Reflections
-    To change the "Shininess" of a material, change the "Reflectivity" property under the "Mirror" section. It doesn't matter if the property is grayed out; it is still editable and will affect export.
+    To change the "Shininess" of a material, change the "Specular" property.
 
   Geometry Flags
-    Applying the "Shadeless" tick in Materials settings will export any geometry with that material as shadeless in game
+    Using the Emissive material type will export any geometry with that material as shadeless in game
 
   Textures
-    When exporting, the default texture name for a material will be the material name. If that material has a texture assigned to it in the textures tab, then the texture name will be used.
-
-    Matte materials should be named "age:notexture". It does not matter if Blender adds .001, .002, etc to the end of this, the exporter will ignore that.
+    The exporter will try and find the texture by searching the node tree. If it can't find the texture, or it's otherwise not assigned, the material will export untextured.
 
   XRefs
-    To define an xref, simply name an empty object "xref:xrefname". Where xrefname is the name of the PKG file to xref e.g. "sp_parkmtr_f". Again it does not matter if Blender adds the .001 and so on. Make sure not to include the ".pkg" extension in the xref name.
+    To define an xref, simply name an empty object "xref:xrefname". Where xrefname is the name of the PKG file to xref e.g. "sp_parkmtr_f". It does not matter if Blender adds the .001 and so on.
 
-    XRefs will not export their rotation. Only their position.
-
-  Paintjobs
-    In the export dialog, in the bottom left, there is a text box called "Material Replacement Info". This text box is there for creating multiple paintjobs.
-
-    The paintjobs system in this Add-on differs from the one in ZModeler, but works in the same way in the end.
-
-    To define a paintjob replacement, use this format:_yellow,_red
-    To define multiple paintjob replacements, use this format:_yellow,_red|_yellow,_blue
-
+  Paintjobs (Variants)
+    Press the N key to bring up the sidebar. You should see a tab called "Angel Tools"
+    
+    Here you can create and edit paintjobs (variants). 
+    
   MTX Files
     MTX files will be created if the location of an object is not 0,0,0. Objects do not need the :m suffix. Adding the :m suffix will crash the game, because it will be exported with that name into the PKG file.
 
@@ -64,32 +53,17 @@ Created by Dummiesman
     Export type (Dashboard, Trailer, Prop) will be automatically determined. And all types of objects such as city props, buildings, etc should work automatically
 
   Transparency
-    Transparency is done using Blenders native system. Tick "Transparency" in the Material panel, and change the Alpha, to make transparent materials.
+    Transparency is done using Blenders native system. Make sure your "Blend Mode" property is set to something other than "Opaque" if you want that material to be transparent in-game.
 
   Vertex Colors
     You can export vertex colors via the checkbox in the export dialog
     
 5.FAQ
   Q:I imported my PKG file, I have my textures in the right format, but I don't see them in Blender!?
-    A:You have to be in Material render mode, rather than Solid. You also must have lighting in the scene to see materials.
+    A:You have to be in Material render mode, rather than Solid. 
 
 6.Special Thanks
   RacingFreak : Providing a Midnight Club sample file leading to some new discoveries
   Dummiesboy : Testing (lots of it), ideas and suggestions
   Fireboyd78 : Suggestions for code improvement
   Diatosta : Testing, ideas and suggestions
-  
-  
-7.Changelog
-  Version 0.11
-    -Fixed MTX file export
-    -General code improvements
-  Version 0.12
-    -General code improvements
-    -Added Auto bound. A feature to automatically generate default-style bounds. Availible in the export options 
-  Version 0.13
-    -General code improvements
-    -Added geometry flags support on exporting, as well as importing. This fixes imports for some models that would previously not import. Regarding exporting: See the Export part of the documentation for information
-    -Fixed an error where the 'Shininess' value would not be imported. However, it was exported. This would cause shiny vehicle underbodies, among other issues.
-  Version 0.14 and beyond
-    -See GITHUB

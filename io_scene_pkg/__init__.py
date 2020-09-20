@@ -1,32 +1,41 @@
 # ##### BEGIN LICENSE BLOCK #####
 #
-# This program is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 3.0
+# This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
 
 bl_info = {
     "name": "Angel Studios PKG Format",
     "author": "Dummiesman",
-    "version": (0, 3, 0),
-    "blender": (2, 77, 0),
+    "version": (1, 0, 0),
+    "blender": (2, 83, 0),
     "location": "File > Import-Export",
     "description": "Import-Export PKG files",
     "warning": "",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.7/Py/"
-                "Scripts/Import-Export/PKG",
+    "doc_url": "https://github.com/Dummiesman/PKGImportExport/",
+    "tracker_url": "https://github.com/Dummiesman/PKGImportExport/",
     "support": 'COMMUNITY',
     "category": "Import-Export"}
 
 import bpy
+import io_scene_pkg.variant_ui as variant_ui
+import io_scene_pkg.angel_scenedata as angel_scenedata
+import io_scene_pkg.bl_preferences as bl_preferences
+import io_scene_pkg.import_tex as import_tex
+import io_scene_pkg.material_helper_ui as material_helper_ui
+
+
 from bpy.props import (
         BoolProperty,
         EnumProperty,
         FloatProperty,
         StringProperty,
         CollectionProperty,
+        IntProperty,
+        PointerProperty
         )
 from bpy_extras.io_utils import (
         ImportHelper,
@@ -40,8 +49,14 @@ class ImportPKG(bpy.types.Operator, ImportHelper):
     bl_options = {'UNDO'}
 
     filename_ext = ".pkg"
-    filter_glob = StringProperty(default="*.pkg", options={'HIDDEN'})
+    filter_glob: StringProperty(default="*.pkg", options={'HIDDEN'})
 
+    import_variants: BoolProperty(
+        name="Import Variants",
+        description="Import variants from this file. Will clear existing variant data in the scene.",
+        default=True,
+        )
+        
     def execute(self, context):
         from . import import_pkg
         keywords = self.as_keywords(ignore=("axis_forward",
@@ -59,36 +74,30 @@ class ExportPKG(bpy.types.Operator, ExportHelper):
     bl_label = 'Export PKG'
 
     filename_ext = ".pkg"
-    filter_glob = StringProperty(
+    filter_glob: StringProperty(
             default="*.pkg",
             options={'HIDDEN'},
             )
 
-    additional_paintjobs = StringProperty(
-        name="Material Replacement Info",
-        description="This is used for extra paintjobs. This list is structured like : _yellow_,_green|_yellow_,_red_  etc.",
-        default="",
-        )
-        
-    e_vertexcolors = BoolProperty(
+    e_vertexcolors: BoolProperty(
         name="Vertex Colors (Diffuse)",
         description="Export vertex colors that affect diffuse",
         default=False,
         )
         
-    e_vertexcolors_s = BoolProperty(
+    e_vertexcolors_s: BoolProperty(
         name="Vertex Colors (Specular)",
         description="Export vertex colors that affect specular",
         default=False,
         )
         
-    apply_modifiers = BoolProperty(
+    apply_modifiers: BoolProperty(
         name="Apply Modifiers",
         description="Do you desire modifiers to be applied in the PKG?",
         default=True,
         )
         
-    selection_only = BoolProperty(
+    selection_only: BoolProperty(
         name="Selection Only",
         description="Export only selected elements",
         default=False,
@@ -114,19 +123,47 @@ def menu_func_export(self, context):
 def menu_func_import(self, context):
     self.layout.operator(ImportPKG.bl_idname, text="Angel Studios ModPackage (.pkg)")
 
+# Register factories
+classes = (
+    ImportPKG,
+    ExportPKG
+)
 
 def register():
-    bpy.utils.register_module(__name__)
-
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
-    bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bl_preferences.register()
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    angel_scenedata.register()
+    variant_ui.register()
+    import_tex.register()
+    material_helper_ui.register()
+    
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    
+    bpy.types.Material.variant = bpy.props.IntProperty(name="Variant")
+    bpy.types.Material.cloned_from = bpy.props.PointerProperty(name="Cloned From", type=bpy.types.Material)
+    
+    bpy.types.Scene.angel = PointerProperty(type=angel_scenedata.AngelSceneData)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    del bpy.types.Scene.angel
+    del bpy.types.Material.cloned_from
+    del bpy.types.Material.variant 
+    
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    material_helper_ui.unregister()
+    import_tex.unregister()
+    variant_ui.unregister()
+    angel_scenedata.unregister()
+    
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    bl_preferences.unregister()
+    
 
 if __name__ == "__main__":
     register()

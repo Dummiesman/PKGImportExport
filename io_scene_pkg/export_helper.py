@@ -3,32 +3,122 @@
 # This program is licensed under Creative Commons BY-NC-SA:
 # https://creativecommons.org/licenses/by-nc-sa/3.0/
 #
-# Copyright (C) Dummiesman, 2016
+# Created by Dummiesman, 2016-2020
 #
 # ##### END LICENSE BLOCK #####
+
 import bpy, bmesh
 import struct
 
-def get_raw_object_name(meshname):
-    return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
+from io_scene_pkg.shader_set import (ShaderSet, Shader)
+import io_scene_pkg.common_helpers as helper
+import io_scene_pkg.binary_helper as bin
 
+def is_mat_shadeless(mat):
+    for node in mat.node_tree.nodes:
+        if node.type == "EMISSION":
+            return True
+    return False
+            
+def create_shader_from_material(mat):
+    # get principled node
+    root_node = None
+    for node in mat.node_tree.nodes:
+        if node.type == "BSDF_PRINCIPLED" or node.type == "EMISSION":
+            root_node = node
+            break
+        
+    if root_node is None:
+        print("No Principled node. We can't export this")
+        return None
     
-def get_material_offset(mtl):
-    # :( hack
-    coffset = 0
-    for mat in bpy.data.materials:
-        if mtl.name == mat.name:
-            return coffset
-        coffset += 1
-    return -1
+    # create shader
+    shader = Shader()
+    
+    color_input_name = "Base Color" if root_node.type == "BSDF_PRINCIPLED" else "Color"
+    diffuse_input = root_node.inputs[color_input_name]
+    if len(diffuse_input.links) > 0:
+        color_input_node = diffuse_input.links[0].from_node
+        if color_input_node.type == "MIX_RGB":
+            # we directly have a (hopefully multiply) MIX_RGB input
+            for inp in color_input_node.inputs:
+                # search for color
+                if len(inp.links) == 0 and inp.name != "Fac":
+                    shader.diffuse_color = [inp.default_value[0], inp.default_value[1], inp.default_value[2], 1.0]
+                # search for image name
+                if len(inp.links) == 1:
+                    image_node = inp.links[0].from_node
+                    if image_node.type == "TEX_IMAGE":
+                        if image_node.image is not None:
+                            shader.name = helper.get_undupe_name(image_node.image.name)
+        elif color_input_node.type == "TEX_IMAGE":
+            # we directly have a texture input
+            if color_input_node.image is not None:
+                shader.name = helper.get_undupe_name(color_input_node.image.name)
+        else:
+            print("Unsupported diffuse link type. Using default value for diffuse_color.")
+    else:
+        shader.diffuse_color = [diffuse_input.default_value[0], diffuse_input.default_value[1], diffuse_input.default_value[2], 1.0]
+    
+    # assign alpha
+    if root_node.type == "BSDF_PRINCIPLED":
+        alpha_input = root_node.inputs["Alpha"]
+        if len(alpha_input.links) > 0:
+            math_node = alpha_input.links[0].from_node
+            if math_node.type == "MATH":
+                # we do range(2) here because there's a 3rd input we want to totally ignore
+                for inp_id in range(2):
+                    inp = math_node.inputs[inp_id]
+                    if len(inp.links) == 0 and inp.name != "Fac":
+                        shader.diffuse_color[3] = inp.default_value
+            else:
+                print("Unsupported alpha link type. Using default value for diffuse_color.")
+        else:
+            shader.diffuse_color[3] = alpha_input.default_value
+    
+    # assign emission
+    if root_node.type == "BSDF_PRINCIPLED":
+        emission_input = root_node.inputs["Emission"]
+        if len(emission_input.links) > 0:
+            mix_node = emission_input.links[0].from_node
+            if mix_node.type == "MIX_RGB":
+                for inp in mix_node.inputs:
+                    if len(inp.links) == 0 and inp.name != "Fac":
+                        shader.emissive_color = [inp.default_value[0], inp.default_value[1], inp.default_value[2], 1.0]
+            else:
+                print("Unsupported diffuse link type. Using default value for diffuse_color.")
+        else:
+            shader.emissive_color = [emission_input.default_value[0], emission_input.default_value[1], emission_input.default_value[2], 1.0]
+        
+    # force alpha if materials blend mode isn't set right
+    if mat.blend_method == 'OPAQUE':
+        shader.diffuse_color[3] = 1.0
+        
+    # assign shininess
+    shader.shininess = root_node.inputs["Specular"].default_value
 
-
+    # copy diffuse
+    shader.ambient_color = shader.diffuse_color 
+    
+    # finally, return it
+    #print("Created shader for " + mat.name)
+    #shader.print()
+    
+    return shader
+    
 def get_used_materials(ob, modifiers):
     """search for used materials at object level"""
     used_materials = []
+    checked_material_indices = {}
     
     # create temp mesh
-    temp_mesh = ob.to_mesh(bpy.context.scene, modifiers, 'PREVIEW')
+    temp_mesh = None
+    if modifiers:
+        dg = bpy.context.evaluated_depsgraph_get()
+        eval_obj = ob.evaluated_get(dg)
+        temp_mesh = eval_obj.to_mesh()
+    else:
+        temp_mesh = ob.to_mesh()
     
     # get bmesh
     bm = bmesh.new()
@@ -36,15 +126,38 @@ def get_used_materials(ob, modifiers):
     
     # look for used materials
     for f in bm.faces:
-      if not f.material_index in used_materials and f.material_index >= 0 and f.material_index < len(ob.material_slots) and ob.material_slots[f.material_index].material is not None:
-        used_materials.append(f.material_index)
+      if (not f.material_index in checked_material_indices 
+          and f.material_index >= 0 and f.material_index < len(ob.data.materials) 
+          and ob.data.materials[f.material_index] is not None):
+
+        material = ob.data.materials[f.material_index]
+        if material.cloned_from is not None: # we want the reference to the ORIGINAL
+            material = material.cloned_from
+        used_materials.append(material)
+        checked_material_indices[f.material_index] = True
     
     # finish off
-    bpy.data.meshes.remove(temp_mesh)
     bm.free()
     
     return used_materials
- 
+
+def create_material_remap(modifiers):
+    all_used_mats = []
+    for ob in bpy.context.scene.objects:
+        if ob.type != 'MESH':
+            continue
+        
+        used_mats = get_used_materials(ob, modifiers)
+        for mat in used_mats:
+            if not mat in all_used_mats:
+                all_used_mats.append(mat)
+     
+    material_map = {}
+    material_idx = 0
+    for mtl in all_used_mats:
+        material_map[mtl.name] = material_idx
+        material_idx += 1
+    return material_map
  
 def bounds(obj):
     """get the bounds of an object"""
@@ -69,66 +182,30 @@ def bounds(obj):
     o_details = collections.namedtuple('object_details', 'x y z')
     return o_details(**originals)
 
-    
+
+def write_matrix_standard(object, file):
+    bnds = bounds(object)
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.min * -1, bnds.y.min, bnds.z.min)))) # have to do * -1 for some reason
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.max * -1, bnds.y.max, bnds.z.max)))) # have to do * -1 for some reason
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location))) # write this twice. one is pivot and one is origin
+    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location)))
+
+                                           
 def write_matrix(meshname, object, pkg_path):
     """write a *.mtx file"""
-    mesh_name_parsed = get_raw_object_name(meshname)
-    find_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
-    # get bounds
-    bnds = bounds(object)
-    mtxfile = open(find_path, 'wb')
-    mtxfile.write(struct.pack('ffffffffffff', bnds.x.min,
-                                              bnds.z.min,
-                                              bnds.y.min * -1,
-                                              bnds.x.max,
-                                              bnds.z.max,
-                                              bnds.y.max * -1,
-                                              # export location twice :/
-                                              # since Blender seems to use that for Location and origin
-                                              object.location.x,
-                                              object.location.z,
-                                              object.location.y * -1,
-                                              object.location.x,
-                                              object.location.z,
-                                              object.location.y * -1))
+    mesh_name_parsed = helper.get_raw_object_name(meshname)
+    mtx_path = pkg_path[:-4] + '_' + mesh_name_parsed + ".mtx"
+
+    mtxfile = open(mtx_path, 'wb')
+    
+    if helper.is_matrix_object(object):
+        bin.write_matrix3x4(mtxfile, object.matrix_world)
+    else:
+        write_matrix_standard(object, mtxfile)
+
     mtxfile.close()
     return
 
-    
-def prepare_materials(modifiers):
-  """find used materials on a global level, and prepare a remap dictionary"""
-  material_list =[]
-  material_idx_list = []
-  material_reorder = {}
-  
-  # prepare mat list
-  for ob in bpy.data.objects:
-    # don't export bound materials
-    if ob.name.upper() == "BOUND":
-      continue
-    
-    if ob.type == 'MESH' and len(ob.material_slots) > 0:
-      # get idx's of used mats (local)
-      idx_list = get_used_materials(ob, modifiers)
-      
-      # remap to global
-      for x in range(len(idx_list)):
-        idx_list[x] = get_material_offset(ob.material_slots[idx_list[x]].material)
-        
-      material_idx_list.extend(idx_list)
-  
-  material_idx_list.sort()
-  
-  # prepare remap dict & material list
-  for x in range(len(material_idx_list)):
-    # remap
-    cidx = material_idx_list[x]
-    if not cidx in material_reorder and cidx >= 0:
-      material_reorder[cidx] = len(material_list)
-      material_list.append(bpy.data.materials[cidx])
-      
-  return (material_list, material_reorder)
-      
     
 def prepare_mesh_data(mesh, material_index, tessface):
   """build mesh data for a PKG file"""
