@@ -29,8 +29,8 @@ def create_shader_from_material(mat):
             break
         
     if root_node is None:
-        print("No Principled node. We can't export this")
-        return None
+        print("No Principled node on material " + mat.name + ". Can't determine how to export this, returning an empty shader instead.")
+        return Shader()
     
     # create shader
     shader = Shader()

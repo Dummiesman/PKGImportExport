@@ -21,6 +21,7 @@ class Shader:
         print("Shininess is " + str(self.shininess))
     
     def write(self, file, type):
+        type = type if type is not None else self.type
         bin.write_angel_string(file, self.name)
     
         if type == "byte":
@@ -36,6 +37,7 @@ class Shader:
         file.write(struct.pack('f', self.shininess))
         
     def read(self, file, type):
+        type = type if type is not None else self.type
         texture_name = bin.read_angel_string(file)
         if texture_name == '':
             # matte material
@@ -57,13 +59,14 @@ class Shader:
             
         self.shininess = bin.read_float(file)
     
-    def __init__(self, file=None, type=None):
+    def __init__(self, type=None, file=None):
         self.name = None
         self.diffuse_color = [1,1,1,1]
         self.emissive_color = [0,0,0,0]
         self.specular_color = [0,0,0,0]
         self.ambient_color = [1,1,1,1]
         self.shininess = 0.0
+        self.type = type
         
         if file is not None and type is not None:
             self.read(file, type)
@@ -109,7 +112,7 @@ class ShaderSet:
         for shader_set_num in range(self.num_variants):
             variant = []
             for shader_num in range(shaders_per_variant):
-                shader = Shader(file, self.type)
+                shader = Shader(self.type, file)
                 variant.append(shader)
             self.variants.append(variant)
         
