@@ -1,11 +1,12 @@
 Blender PKG Add-On
-Version 1.0 RC2
-September 15th 2020
+Version 1.0
+September 20th 2020
 
 Created by Dummiesman
 
 1.Requirements
   The addon was created in Blender 2.83, and may not work in previous verions.
+  The addon was tested and appears to work in 2.9+ as well
 
 2.Installation
   - Open the Blender preferences menu, found under Edit->Preferences.
@@ -64,6 +65,6 @@ Created by Dummiesman
 
 6.Special Thanks
   RacingFreak : Providing a Midnight Club sample file leading to some new discoveries
-  Dummiesboy : Testing (lots of it), ideas and suggestions
+  Deebz__ : Testing (lots of it), ideas and suggestions
   Fireboyd78 : Suggestions for code improvement
   Diatosta : Testing, ideas and suggestions
