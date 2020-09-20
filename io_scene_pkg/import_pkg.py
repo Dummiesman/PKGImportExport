@@ -311,6 +311,7 @@ def load_pkg(filepath,
     global pkg_path
     pkg_path = filepath
 
+    # start import
     print("importing PKG: %r..." % (filepath))
 
     if bpy.ops.object.select_all.poll():
@@ -322,7 +323,7 @@ def load_pkg(filepath,
     # start reading our pkg file
     pkg_version = file.read(4).decode("utf-8")
     if pkg_version != "PKG3" and pkg_version != "PKG2":
-        print('\tFatal Error:  PKG file is wrong format : ' + pkg_version)
+        print('\tFatal Error: PKG file is wrong format : ' + pkg_version)
         file.close()
         return
         
@@ -353,7 +354,9 @@ def load_pkg(filepath,
         # Angel released a very small batch of corrupt PKG files
         # this is here just in case someone tries to import one
         if file_length == 0 and pkg_version_id == 3:
-            raise Exception("Invalid PKG3 file : cannot have file length of 0")
+            print("Invalid PKG3 file : cannot have file length of 0")
+            file.close()
+            return
             
         print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
         if file_name == "shaders":

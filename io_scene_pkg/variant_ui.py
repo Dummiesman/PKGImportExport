@@ -406,8 +406,9 @@ class ANGEL_PT_AngelPanel(Panel):
             row.operator("angel.add_material_to_variant")
         
         # warn the user in case of dashboard, with some horrible text wrapping code
-        if (bpy.data.objects.get("dash_H") is not None or bpy.data.objects.get("DASH_H") is not None or bpy.data.objects.get("dash_h") is not None) and len(angel.variants) < 9:
-            missing_variant_count = 9 - len(angel.variants)
+        dash_variant_warn_count = 8
+        if (bpy.data.objects.get("dash_H") is not None or bpy.data.objects.get("DASH_H") is not None or bpy.data.objects.get("dash_h") is not None) and len(angel.variants) < dash_variant_warn_count:
+            missing_variant_count = dash_variant_warn_count - len(angel.variants)
             char_fit = context.region.width / 6
             wrapp = textwrap.TextWrapper(width=char_fit)
             wList = wrapp.wrap(text="WARNING: Your dashboard currently does not have enough variants, and will crash the game. You need to add " + str(missing_variant_count) + " more variant(s).")
