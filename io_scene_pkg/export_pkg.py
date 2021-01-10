@@ -311,7 +311,8 @@ def export_geometry(file, meshlist, options):
             FVF_FLAGS.set_flag("D3DFVF_SPECULAR")
 
         # do we need a matrix file? Only for H object
-        if ((obj.location[0] != 0 or obj.location[1] != 0 or obj.location[2] != 0) and obj.name.upper().endswith("_H")):
+        obj_offcenter = abs(obj.location[0]) > 0.001 or abs(obj.location[1]) > 0.001 or abs(obj.location[2]) > 0.001
+        if obj_offcenter and obj.name.upper().endswith("_H"):
             export_helper.write_matrix(obj.name, obj, pkg_path)
 
         # write mesh data header
