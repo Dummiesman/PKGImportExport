@@ -9,6 +9,7 @@
 
 import bpy, bmesh
 import os, time, struct
+from functools import cmp_to_key
 
 import os.path as path
 
@@ -158,6 +159,20 @@ misc_mtx_objects = ["EXHAUST0", "EXHAUST1"]
 ######################################################
 # EXPORT HELPERS
 ######################################################
+def unknown_objects_comparison(item1, item2):
+    name1 = helper.get_raw_object_name(item1.name)
+    name2 = helper.get_raw_object_name(item2.name)
+    lod1 = helper.get_object_lod_name(item1.name)
+    lod2 = helper.get_object_lod_name(item2.name)
+    sortkey_a = name1 + "_" + helper.get_alphabetical_lod_id(lod1)
+    sortkey_b = name2 + "_" + helper.get_alphabetical_lod_id(lod2)
+    
+    if sortkey_a < sortkey_b:
+        return -1
+    else:
+        return 1
+
+
 def reorder_objects(lst, pred):
     return_list = [None] * len(pred)
     append_list = []
@@ -168,7 +183,7 @@ def reorder_objects(lst, pred):
         except:
             # not found in predicate list, add on to the end
             append_list.append(v)
-    return [x for x in return_list if x is not None] + append_list
+    return [x for x in return_list if x is not None] + sorted(append_list, key=cmp_to_key(unknown_objects_comparison))
 
 
 ######################################################

@@ -107,8 +107,35 @@ def try_load_texture(tex_name, search_path):
  
 def get_raw_object_name(meshname):
     return meshname.upper().replace("_VL", "").replace("_L", "").replace("_M", "").replace("_H", "")
-    
-    
+
+
+def get_object_lod_name(item):
+    item_upper = item.upper()
+    if item_upper.endswith("_H"):
+        return "H"
+    elif item_upper.endswith("_M"):
+        return "M"
+    elif item_upper.endswith("_L"):
+        return "L"
+    elif item_upper.endswith("_VL"):
+        return "VL"
+    elif item_upper == 'H' or item_upper == 'M' or item_upper == 'L' or item_upper == 'VL':
+        return item_upper
+    return None
+
+
+def get_alphabetical_lod_id(item):
+    if item == 'H':
+        return "A"
+    elif item == 'M':
+        return "B"
+    elif item == 'L':
+        return "C"
+    elif item == 'VL':
+        return "D"
+    return "E"
+
+
 def get_undupe_name(name):
     nidx = name.find('.')
     return name[:nidx] if nidx != -1 else name
