@@ -85,7 +85,15 @@ vehicle_list = ["BODY_H", "BODY_M", "BODY_L", "BODY_VL",
                 "FNDR0_H", "FNDR0_M", "FNDR0_L", "FNDR0_VL",
                 "FNDR1_H", "FNDR1_M", "FNDR1_L", "FNDR1_VL",
                 "WHL4_H", "WHL4_M", "WHL4_L", "WHL4_VL",
-                "WHL5_H", "WHL5_M", "WHL5_L", "WHL5_VL"]
+                "WHL5_H", "WHL5_M", "WHL5_L", "WHL5_VL",
+                "PLIGHTON_H", "PLIGHTON_M", "PLIGHTON_L", "PLIGHTON_VL",
+                "PLIGHTOFF_H", "PLIGHTOFF_M", "PLIGHTOFF_L", "PLIGHTOFF_VL",
+                "SWHL0_H", "SWHL0_M", "SWHL0_L", "SWHL0_VL",
+                "SWHL1_H", "SWHL1_M", "SWHL1_L", "SWHL1_VL",
+                "SWHL2_H", "SWHL2_M", "SWHL2_L", "SWHL2_VL",
+                "SWHL3_H", "SWHL3_M", "SWHL3_L", "SWHL3_VL",
+                "SWHL4_H", "SWHL4_M", "SWHL4_L", "SWHL4_VL",
+                "SWHL5_H", "SWHL5_M", "SWHL5_L", "SWHL5_VL"]
 
 # Vehicle dashboards
 dash_list = ["DAMAGE_NEEDLE_H", "DAMAGE_NEEDLE_M", "DAMAGE_NEEDLE_L", "DAMAGE_NEEDLE_VL",
