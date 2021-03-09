@@ -444,16 +444,17 @@ def save_pkg(filepath,
     export_shadertype = 'byte'
     for obj in export_objects:
         if obj.type == 'MESH':
-            if obj.name.upper().startswith("DASH_"):
+            obj_name = obj.name.upper()
+            if obj_name.startswith("DASH_"):
                 export_shadertype = 'float'
                 export_typestr = 'dash'
                 export_pred = dash_list
                 break
-            if obj.name.upper().startswith("BODY_"):
+            if obj_name.startswith("BODY_"):
                 export_typestr = 'vehicle'
                 export_pred = vehicle_list
                 break
-            if obj.name.upper().startswith("TRAILER_"):
+            if obj_name.startswith("TRAILER_") and not obj_name.startswith("TRAILER_HITCH"):
                 export_typestr = 'trailer'
                 export_pred = trailer_list
                 break
