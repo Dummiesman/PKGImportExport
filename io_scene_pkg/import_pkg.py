@@ -317,7 +317,7 @@ def load_pkg(filepath,
     if bpy.ops.object.select_all.poll():
         bpy.ops.object.select_all(action='DESELECT')
 
-    time1 = time.clock()
+    time1 = time.perf_counter()
     file = open(filepath, 'rb')
 
     # start reading our pkg file
@@ -358,7 +358,7 @@ def load_pkg(filepath,
             file.close()
             return
             
-        print('\t[' + str(round(time.clock() - time1, 3)) + '] processing : ' + file_name)
+        print('\t[' + str(round(time.perf_counter() - time1, 3)) + '] processing : ' + file_name)
         if file_name == "shaders":
             # load shaders file
             read_shaders_file(file, file_length, file.tell(), import_variants)
@@ -379,7 +379,7 @@ def load_pkg(filepath,
     import_misc_mtx()
     # END READ MISC MTX
     
-    print(" done in %.4f sec." % (time.clock() - time1))
+    print(" done in %.4f sec." % (time.perf_counter() - time1))
     file.close()
 
 

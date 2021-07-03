@@ -418,7 +418,7 @@ def save_pkg(filepath,
 
     print("exporting PKG: %r..." % (filepath))
     
-    time1 = time.clock()
+    time1 = time.perf_counter()
     file = open(filepath, 'wb')
     
     # create our options list
@@ -481,18 +481,18 @@ def save_pkg(filepath,
     
     # begin write pkg file
     file.write(bytes('PKG3', 'utf-8'))
-    print('\t[%.4f] exporting mesh data' % (time.clock() - time1))
+    print('\t[%.4f] exporting mesh data' % (time.perf_counter() - time1))
     export_geometry(file, reorder_objects(export_geomlist, export_pred), export_options)
-    print('\t[%.4f] exporting shaders' % (time.clock() - time1))
+    print('\t[%.4f] exporting shaders' % (time.perf_counter() - time1))
     export_shaders(file, context, export_shadertype)
-    print('\t[%.4f] exporting xrefs' % (time.clock() - time1))
+    print('\t[%.4f] exporting xrefs' % (time.perf_counter() - time1))
     export_xrefs(file, selection_only)
-    print('\t[%.4f] exporting offset' % (time.clock() - time1))
+    print('\t[%.4f] exporting offset' % (time.perf_counter() - time1))
     export_offset(file)
-    print('\t[%.4f] exporting misc mtx' % (time.clock() - time1))
+    print('\t[%.4f] exporting misc mtx' % (time.perf_counter() - time1))
     export_misc_mtx()
     # end write pkg file
-    print(" done in %.4f sec." % (time.clock() - time1))
+    print(" done in %.4f sec." % (time.perf_counter() - time1))
     file.close()
 
 
