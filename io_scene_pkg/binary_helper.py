@@ -16,7 +16,7 @@ import io_scene_pkg.common_helpers as helper
 # READ #
 ########
 def read_angel_string(file):
-    str_len = struct.unpack('B', file.read(1))[0]
+    str_len = struct.unpack('<B', file.read(1))[0]
     if str_len == 0:
         return ''
     else:
@@ -52,7 +52,7 @@ def read_color4f(file):
 
 
 def read_color4d(file):
-    c4d = struct.unpack('BBBB', file.read(4))
+    c4d = struct.unpack('<BBBB', file.read(4))
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
 
 

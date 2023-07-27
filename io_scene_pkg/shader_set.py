@@ -98,7 +98,7 @@ class Shader:
 
 class ShaderSet:
     def read(self, file):
-        shadertype_raw, shaders_per_variant = struct.unpack('2L', file.read(8))
+        shadertype_raw, shaders_per_variant = struct.unpack('<2L', file.read(8))
         
         self.type = "float"
         self.num_variants = shadertype_raw
