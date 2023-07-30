@@ -185,10 +185,10 @@ def bounds(obj):
 
 def write_matrix_standard(object, file):
     bnds = bounds(object)
-    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.min * -1, bnds.y.min, bnds.z.min)))) # have to do * -1 for some reason
-    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2((bnds.x.max * -1, bnds.y.max, bnds.z.max)))) # have to do * -1 for some reason
-    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location))) # write this twice. one is pivot and one is origin
-    file.write(struct.pack('fff', *helper.convert_vecspace_to_mm2(object.location)))
+    file.write(struct.pack('<fff', *helper.convert_vecspace_to_mm2((bnds.x.min * -1, bnds.y.min, bnds.z.min)))) # have to do * -1 for some reason
+    file.write(struct.pack('<fff', *helper.convert_vecspace_to_mm2((bnds.x.max * -1, bnds.y.max, bnds.z.max)))) # have to do * -1 for some reason
+    file.write(struct.pack('<fff', *helper.convert_vecspace_to_mm2(object.location))) # write this twice. one is pivot and one is origin
+    file.write(struct.pack('<fff', *helper.convert_vecspace_to_mm2(object.location)))
 
                                            
 def write_matrix(meshname, object, pkg_path):

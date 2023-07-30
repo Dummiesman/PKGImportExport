@@ -34,7 +34,7 @@ class Shader:
             bin.write_color4f(file, self.specular_color)
             bin.write_color4f(file, self.emissive_color)
             
-        file.write(struct.pack('f', self.shininess))
+        file.write(struct.pack('<f', self.shininess))
         
     def read(self, file, type):
         type = type if type is not None else self.type

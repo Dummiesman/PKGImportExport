@@ -34,29 +34,49 @@ def make_placeholder_texture(name):
     im.pixels = pixels[:]
     im.update()
     return im
+
     
-def find_file_with_game_fallback(file, search_path, subfolder = None, ignore_subdir_on_search_path = False):
-    # first search the search_path
-    find_path = (path.abspath(path.join(search_path, file))
-                 if (subfolder is None or ignore_subdir_on_search_path)
-                 else path.abspath(path.join(search_path, subfolder, file)))
+# quick'n'dirty case-insensitive file finder
+def find_file_case_insensitive(directory_to_search, file_to_find):
+    directory_listing = os.listdir(path.abspath(directory_to_search))
+
+    for file in directory_listing:
+        if file.lower() == file_to_find.lower():
+            return file
+
+    return None
+
+
+def find_file(directory, filename):
+    real_file = find_file_case_insensitive(directory, filename)
+
+    if real_file is not None:
+        find_path = path.abspath(path.join(directory, real_file))
     
-    #print("find_path initial:" + find_path)
-    if path.isfile(find_path):
-        return find_path
-    
-    # then search game dir
-    preferences = bpy.context.preferences
-    addon_prefs = preferences.addons[__package__].preferences
-    if addon_prefs.use_gamepath:
-        find_path = (path.abspath(path.join(addon_prefs.gamepath, subfolder, file)) 
-                     if subfolder is not None 
-                     else path.abspath(path.join(addon_prefs.gamepath, file)))
-        #print("find_path game:" + find_path)
         if path.isfile(find_path):
             return find_path
 
-    # wasn't found in game dir or search_path
+    return None
+
+
+def find_file_with_game_fallback(file, search_path, subfolder = None, ignore_subdir_on_search_path = False):
+    preferences = bpy.context.preferences
+    addon_prefs = preferences.addons[__package__].preferences
+
+    if addon_prefs.use_gamepath is True and addon_prefs.gamepath != "":
+        search_path = addon_prefs.gamepath
+    
+    normalised_search_path = (search_path
+        if (subfolder is None or ignore_subdir_on_search_path)
+        else path.join(search_path, subfolder)
+    )
+
+    found_file = find_file(normalised_search_path, file)
+    
+    if found_file is not None:
+        return found_file
+
+    # exhausted our search, return nothing
     return None
 
 
@@ -79,7 +99,7 @@ def load_texture_from_path(file_path, use_placeholder_if_missing=True):
     else:
         img = bpy.data.images.load(file_path)
         return img
-        
+      
     return None    
 
     

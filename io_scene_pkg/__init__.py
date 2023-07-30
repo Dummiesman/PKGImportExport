@@ -10,7 +10,7 @@
 bl_info = {
     "name": "Angel Studios PKG Format",
     "author": "Dummiesman",
-    "version": (1, 0, 0),
+    "version": (1, 0, 3),
     "blender": (2, 83, 0),
     "location": "File > Import-Export",
     "description": "Import-Export PKG files",

@@ -202,7 +202,7 @@ def export_xrefs(file, selected_only):
         bin.write_file_header(file, "xrefs")
         num_xrefs = 0
         xref_num_offset = file.tell()
-        file.write(struct.pack('L', 0))
+        file.write(struct.pack('<L', 0))
         for obj in xref_objects:
             num_xrefs += 1
             #write matrix
@@ -217,13 +217,13 @@ def export_xrefs(file, selected_only):
                 
         file_length = file.tell() - xref_num_offset
         file.seek(xref_num_offset - 4, 0)
-        file.write(struct.pack('LL', file_length, num_xrefs))
+        file.write(struct.pack('<LL', file_length, num_xrefs))
         file.seek(0, 2)
 
 
 def export_offset(file):
     bin.write_file_header(file, "offset", 12)
-    file.write(struct.pack('fff', 0, 0, 0))
+    file.write(struct.pack('<fff', 0, 0, 0))
 
 
 def export_shaders(file, context, type="byte"):
@@ -251,7 +251,7 @@ def export_shaders(file, context, type="byte"):
     shaders_per_paintjob = len(material_remap_table)
     
     # write header
-    file.write(struct.pack('LL', shadertype_raw, shaders_per_paintjob))
+    file.write(struct.pack('<LL', shadertype_raw, shaders_per_paintjob))
     
     # write material sets
     ordered_material_remap = sorted(material_remap_table.items(), key =lambda x: x[1])
@@ -284,7 +284,7 @@ def export_shaders(file, context, type="byte"):
     # write file length
     shaders_file_length = file.tell() - shaders_data_offset
     file.seek(shaders_data_offset - 4)
-    file.write(struct.pack('L', shaders_file_length))
+    file.write(struct.pack('<L', shaders_file_length))
     file.seek(0, 2)
 
 
@@ -339,7 +339,7 @@ def export_geometry(file, meshlist, options):
             export_helper.write_matrix(obj.name, obj, pkg_path)
 
         # write mesh data header
-        file.write(struct.pack('LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
+        file.write(struct.pack('<LLLLL', num_sections, total_verts, total_faces, num_sections, FVF_FLAGS.value))
 
         # write sections
         cur_material_index = -1
@@ -363,10 +363,10 @@ def export_geometry(file, meshlist, options):
             shader_offset = material_remap_table[real_material.name]
             
             # write strip to file
-            file.write(struct.pack('HHL', num_strips, section_flags, shader_offset))
+            file.write(struct.pack('<HHL', num_strips, section_flags, shader_offset))
             strip_primType = 3
             strip_vertices = len(cmtl_verts)
-            file.write(struct.pack('LL', strip_primType, strip_vertices))
+            file.write(struct.pack('<LL', strip_primType, strip_vertices))
             
             # write vertices
             for cv in range(len(cmtl_verts)):
@@ -384,9 +384,9 @@ def export_geometry(file, meshlist, options):
             
             # write indices
             strip_indices_len = int(len(cmtl_indices) * 3)
-            file.write(struct.pack('L', strip_indices_len))
+            file.write(struct.pack('<L', strip_indices_len))
             for ply in cmtl_indices:
-                file.write(struct.pack('HHH', ply[0], ply[1], ply[2]))
+                file.write(struct.pack('<HHH', ply[0], ply[1], ply[2]))
         
         # clean up temp_mesh
         bm.free()
@@ -394,7 +394,7 @@ def export_geometry(file, meshlist, options):
         # write FILE length
         file_data_length = file.tell() - file_data_start_offset
         file.seek(file_data_start_offset - 4)
-        file.write(struct.pack('L', file_data_length))
+        file.write(struct.pack('<L', file_data_length))
         file.seek(0, 2)
 
 
