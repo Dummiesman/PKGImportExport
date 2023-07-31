@@ -16,7 +16,7 @@ import io_scene_pkg.common_helpers as helper
 # READ #
 ########
 def read_angel_string(file):
-    str_len = struct.unpack('B', file.read(1))[0]
+    str_len = struct.unpack('<B', file.read(1))[0]
     if str_len == 0:
         return ''
     else:
@@ -52,7 +52,7 @@ def read_color4f(file):
 
 
 def read_color4d(file):
-    c4d = struct.unpack('BBBB', file.read(4))
+    c4d = struct.unpack('<BBBB', file.read(4))
     return [c4d[0]/255, c4d[1]/255, c4d[2]/255, c4d[3]/255]
 
 
@@ -108,11 +108,11 @@ def write_matrix3x4(file, matrix):
 
 def write_angel_string(file, strng):
     if strng is not None and len(strng) > 0:
-        file.write(struct.pack('B', len(strng)+1))
+        file.write(struct.pack('<B', len(strng)+1))
         file.write(bytes(strng, 'UTF-8'))
         file.write(bytes('\x00', 'UTF-8'))
     else:
-        file.write(struct.pack('B', 0))
+        file.write(struct.pack('<B', 0))
 
 
 def write_float2(file, data):
@@ -128,7 +128,7 @@ def write_color4d(file, color, alpha=1):
     g = min(255, int(color[1] * 255))
     b = min(255, int(color[2] * 255))
     a = min(255, int(alpha * 255))
-    file.write(struct.pack('BBBB', r, g, b, a))
+    file.write(struct.pack('<BBBB', r, g, b, a))
 
 
 def write_color4f(file, color, alpha=1):
@@ -138,4 +138,4 @@ def write_color4f(file, color, alpha=1):
 def write_file_header(file, name, length=0):
     file.write(bytes('FILE', 'utf-8'))
     write_angel_string(file, name)
-    file.write(struct.pack('L', length))
+    file.write(struct.pack('<L', length))

@@ -34,7 +34,7 @@ class Shader:
             bin.write_color4f(file, self.specular_color)
             bin.write_color4f(file, self.emissive_color)
             
-        file.write(struct.pack('f', self.shininess))
+        file.write(struct.pack('<f', self.shininess))
         
     def read(self, file, type):
         type = type if type is not None else self.type
@@ -98,7 +98,7 @@ class Shader:
 
 class ShaderSet:
     def read(self, file):
-        shadertype_raw, shaders_per_variant = struct.unpack('2L', file.read(8))
+        shadertype_raw, shaders_per_variant = struct.unpack('<2L', file.read(8))
         
         self.type = "float"
         self.num_variants = shadertype_raw

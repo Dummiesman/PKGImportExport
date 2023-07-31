@@ -113,7 +113,7 @@ def read_xrefs(file):
     scn = bpy.context.scene
 
     # read xrefs
-    num_xrefs = struct.unpack('L', file.read(4))[0]
+    num_xrefs = struct.unpack('<L', file.read(4))[0]
     for num in range(num_xrefs):
         # read matrix
         mtx = bin.read_matrix3x4(file)
@@ -157,7 +157,7 @@ def read_geometry_file(file, meshname):
     bpy.ops.object.mode_set(mode='EDIT', toggle=False)
     
     # read geometry FILE data
-    num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('5L', file.read(20))
+    num_sections, num_vertices_tot, num_indices_tot, num_sections_dupe, fvf = struct.unpack('<5L', file.read(20))
     FVF_FLAGS = FVF(fvf)
 
     # mesh data holders
@@ -179,7 +179,7 @@ def read_geometry_file(file, meshname):
         FLAG_compact_strips = ((strip_flags & (1 << 8)) != 0)
 
         # get material, and add it to the objects material list
-        shader_offset = struct.unpack('H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('L', file.read(4))[0]
+        shader_offset = struct.unpack('<H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('<L', file.read(4))[0]
         
         # do we have this material?
         if bpy.data.materials.get(str(shader_offset)) is None:
@@ -192,8 +192,8 @@ def read_geometry_file(file, meshname):
         # read strips
         for strip in range(num_strips):
             # read
-            prim_type = struct.unpack('H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('L', file.read(4))[0] # seek past primtype
-            num_vertices =  struct.unpack('H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('L', file.read(4))[0]
+            prim_type = struct.unpack('<H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('<L', file.read(4))[0] # seek past primtype
+            num_vertices =  struct.unpack('<H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('<L', file.read(4))[0]
 
             # read vertices
             for i in range(num_vertices):
@@ -229,14 +229,14 @@ def read_geometry_file(file, meshname):
                     
                     
             # read indices and build mesh
-            num_indices = struct.unpack('H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('L', file.read(4))[0]
+            num_indices = struct.unpack('<H', file.read(2))[0] if FLAG_compact_strips else struct.unpack('<L', file.read(4))[0]
 
             triangle_data = None
             if FLAG_compact_strips and prim_type == 4:
-             tristrip_data = struct.unpack(str(num_indices) + 'H', file.read(2 * num_indices))
+             tristrip_data = struct.unpack('<' + str(num_indices) + 'H', file.read(2 * num_indices))
              triangle_data = import_helper.convert_triangle_strips(tristrip_data)
             else:
-             triangle_data = struct.unpack(str(num_indices) + 'H', file.read(2 * num_indices))
+             triangle_data = struct.unpack('<' + str(num_indices) + 'H', file.read(2 * num_indices))
 
             for i in range(0, len(triangle_data), 3):
               tri_indices = triangle_data[i:i+3]
@@ -349,7 +349,7 @@ def load_pkg(filepath,
 
         # found a proper FILE header
         file_name = bin.read_angel_string(file)
-        file_length = 0 if pkg_version_id == 2 else struct.unpack('L', file.read(4))[0]
+        file_length = 0 if pkg_version_id == 2 else struct.unpack('<L', file.read(4))[0]
         
         # Angel released a very small batch of corrupt PKG files
         # this is here just in case someone tries to import one

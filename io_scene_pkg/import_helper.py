@@ -45,7 +45,7 @@ def find_matrix(meshname, pkg_path):
     
     if find_path is not None:
         mtxfile = open(find_path, 'rb')
-        mtx_info = struct.unpack('ffffffffffff', mtxfile.read(48))
+        mtx_info = struct.unpack('<ffffffffffff', mtxfile.read(48))
         
         mtx_min = helper.convert_vecspace_to_blender((mtx_info[0], mtx_info[1], mtx_info[2]))
         mtx_max = helper.convert_vecspace_to_blender((mtx_info[3], mtx_info[4], mtx_info[5]))
